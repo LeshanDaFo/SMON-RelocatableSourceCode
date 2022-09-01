@@ -1,7 +1,7 @@
 ; ###############################################################
 ; #                                                             #
 ; #  SMON RELOCATABLE SOURCE CODE                               #       
-; #  Version 1.0 (2022.08.27)                                   #
+; #  Version 1.0.0.003 (2022.09.01)                             #
 ; #                                                             #  
 ; #  Based on the source code from: cbmuser                     #
 ; #  https://github.com/cbmuser/smon-reassembly                 #
@@ -18,6 +18,11 @@
 ; #  The SMON RELOCATABLE SOURCE CODE is public domain          #
 ; ###############################################################
 
+; History:
+; V1    =   Initial release
+; V1.0.0.001 =   re arrange some lables , add more comments
+; V1.0.0.002 =   add more comments
+; V1.0.0.003 =   add more comments
 
 TASTBUF         = $0277
 COLOR           = $0286                         ; charcolor
@@ -110,10 +115,10 @@ HCN             = $21                           ; "!"
 ; if nothing is selected here, SMON will be compiled without any extension
 
 ;FMON = 1        ; this is the FMON version, also named SMONFx000, this seems to be the 'normal' or initial one, including the base disc commands
-;PLUS = 1        ; this is the PLUS version, also named SMONPx000, for the new function the FMON monitor is removed
+PLUS = 1        ; this is the PLUS version, also named SMONPx000, for the new function the FMON monitor is removed
 ;ILOC = 1        ; this is the ILOC version, also named SMONIx000, this provides the function to show the illegal opcodes, the FMON is removed 
 
-FCOM = 1        ; this is the FCOM version, can named as SMONDx000, this has the extended Floppy cpmmands, the "Trace" function is removed
+;FCOM = 1        ; this is the FCOM version, can named as SMONDx000, this has the extended Floppy cpmmands, the "Trace" function is removed
 
 ; define here the start address in memory
 
@@ -140,15 +145,12 @@ FCOM = 1        ; this is the FCOM version, can named as SMONDx000, this has the
 ; -----------------------------------------------------------
 ; ----------------------- CIA VERSION -----------------------
 ; -----------------------------------------------------------
-; the new CIA is defined as standaed
+; the new CIA is defined as standard
 ; commenting CIA_N will activate the old version
 ; changing the CIA timing is necessary if the trace-command is not working well
 ; it can also defined manually at address $CD8E
  CIA_N = 1     ; change here
 ; -----------------------------------------------------------
-
-
-
 
 
 ; -----------------------------------------------------------
@@ -171,8 +173,8 @@ _brk_hb:        lda     #>BREAK
 CMDTBL:         !by     $27,$23,$24,$25,$2C,$3A,$3B,$3D ;"'#$%,:;=" 
                 !by     $3F,$41,$42,$43,$44,$46,$47,$49 ;"=?ABCDFGI"
                 !by     $4B,$4C,$4D,$4F,$50,$52,$53     ;"KLMOPRS"
-; depending of the selection, different commands are defined
 
+; depending of the selection, different commands are defined
 !ifdef FCOM {
                 !by     $00                             ; deactivate the trace command if FCOM is selected
 } else {
@@ -265,11 +267,9 @@ HCMDTAB:        !by     HCK,HCM,HCR,HCD,HCH,HCZ,HCN     ; "':;,()!"
                 !by     >ILLEGAL-1
                 !by     $00,$00        
 }        
-
                 !by     $00,$00,$00
 }        
                 !by     $00,$00,$00
-
 !ifdef ILOC {
 OFFSET:         !by     $00,$00,$01,$00            
 } else {
@@ -310,41 +310,49 @@ LC0EA:          !by     $00,$40,$40,$80,$80,$20,$10,$25
 LC0FB:          !by     $08,$E7,$E7,$E7,$E7,$E3,$E3,$E3
                 !by     $E3,$E3,$E3,$E3,$E3,$E3,$E3,$E7
                 !by     $A7,$E7,$E7,$F3,$F3,$F7
-LC111:          !by     $DF,$26,$46,$06,$66,$41,$81,$E1
-                !by     $01,$A0,$A2,$A1,$C1,$21,$61,$84
-                !by     $86,$E6,$C6,$E0,$C0,$24,$4C,$20
-                !by     $90,$B0,$F0,$30,$D0,$10,$50,$70
-                !by     $78,$00,$18,$D8,$58,$B8,$CA,$88
-                !by     $E8,$C8,$EA
-LC13C:          !by     $48,$08,$68,$28,$40,$60,$AA,$A8
-                !by     $BA,$8A,$9A,$98,$38
-LC149:          !by     $F8,$89,$9C,$9E
+LC111:          !by     $DF
+
+; --------- 6510 COMMANDS -----------------------------------
+LC112:          !by     $26,$46,$06,$66,$41,$81,$E1,$01   ;ROL,LSR,ASL,....
+                !by     $A0,$A2,$A1,$C1,$21,$61,$84,$86
+                !by     $E6,$C6,$E0,$C0,$24,$4C,$20,$90
+                !by     $B0,$F0,$30,$D0,$10,$50,$70,$78
+                !by     $00,$18,$D8,$58,$B8,$CA,$88,$E8
+LC13A:          !by     $C8,$EA,$48,$08,$68,$28,$40,$60
+                !by     $AA,$A8,$BA,$8A,$9A,$98,$38,$F8 
+
+LC14A:          !by     $89,$9C,$9E
 LC14D:          !by     $B2,$2A,$4A,$0A,$6A,$4F,$23,$93
-                !by     $B3,$F3,$33,$D3,$13,$53
-LC15B:          !by     $73,$52,$4C,$41,$52,$45,$53,$53
-                !by     $4F,$4C,$4C,$4C,$43,$41,$41,$53
-                !by     $53,$49,$44,$43,$43,$42,$4A,$4A
-                !by     $42,$42,$42,$42,$42,$42,$42,$42
-                !by     $53,$42,$43,$43,$43,$43,$44,$44
-                !by     $49,$49,$4E,$50,$50,$50,$50,$52
-                !by     $52,$54,$54,$54,$54,$54,$54,$53
-LC193:          !by     $53,$4F,$53,$53,$4F,$4F,$54,$42
-                !by     $52,$44,$44,$44,$4D,$4E,$44,$54
-                !by     $54,$4E,$45,$50,$50,$49,$4D,$53
-                !by     $43,$43,$45,$4D,$4E,$50,$56,$56
-                !by     $45,$52,$4C,$4C,$4C,$4C,$45,$45
-                !by     $4E,$4E,$4F,$48,$48,$4C,$4C,$54
-                !by     $54,$41,$41,$53,$58,$58,$59,$45
-LC1CB:          !by     $45,$4C,$52,$4C,$52,$52,$41,$43
-                !by     $41,$59,$58,$41,$50,$44,$43,$59
-                !by     $58,$43,$43,$58,$59,$54,$50,$52
-                !by     $43,$53,$51,$49,$45,$4C,$43,$53
-                !by     $49,$4B,$43,$44,$49,$56,$58,$59
-                !by     $58,$59,$50,$41,$50,$41,$50,$49
-                !by     $53,$58,$59,$58,$41,$53,$41,$43
-LC203:          !by     $44,$08,$84,$81,$22,$21,$26,$20
-LC20B:          !by     $80,$03,$20,$1C,$14,$14,$10,$04
-                !by     $0C
+                !by     $B3,$F3,$33,$D3,$13,$53,$73
+
+; --------- 6510 COMMANDS CHAR ------------------------------
+LC15C:          !by     $52,$4C,$41,$52,$45,$53,$53,$4F   ; "R L A R E S S O"     ;R
+                !by     $4C,$4C,$4C,$43,$41,$41,$53,$53   ; "L L L C A A S S"
+                !by     $49,$44,$43,$43,$42,$4A,$4A,$42   ; "I D C C B J J B"
+                !by     $42,$42,$42,$42,$42,$42,$42,$53   ; "B B B B B B B S"
+                !by     $42,$43,$43,$43,$43,$44,$44,$49   ; "B C C C C D D I"
+                !by     $49,$4E,$50,$50,$50,$50,$52,$52   ; "I N P P P P R R"
+                !by     $54,$54,$54,$54,$54,$54,$53,$53   ; "T T T T T T S S"
+
+LC194:          !by     $4F,$53,$53,$4F,$4F,$54,$42,$52   ; "O S S O O T B R"     ;O
+                !by     $44,$44,$44,$4D,$4E,$44,$54,$54   ; "D D D M N D T T"
+                !by     $4E,$45,$50,$50,$49,$4D,$53,$43   ; "N E P P I M S C"
+                !by     $43,$45,$4D,$4E,$50,$56,$56,$45   ; "C E M N P V V E"
+                !by     $52,$4C,$4C,$4C,$4C,$45,$45,$4E   ; "R L L L L E E N"
+                !by     $4E,$4F,$48,$48,$4C,$4C,$54,$54   ; "N O H H L L T T"
+                !by     $41,$41,$53,$58,$58,$59,$45,$45   ; "A A S X X Y E E"
+
+LC1CC:          !by     $4C,$52,$4C,$52,$52,$41,$43,$41   ; "L R L R R A C A"     ;L
+                !by     $59,$58,$41,$50,$44,$43,$59,$58   ; "Y X A P D C Y X"
+                !by     $43,$43,$58,$59,$54,$50,$52,$43   ; "C C X Y T P R C"
+                !by     $53,$51,$49,$45,$4C,$43,$53,$49   ; "S Q I E L S C I"
+                !by     $4B,$43,$44,$49,$56,$58,$59,$58   ; "K C D I V X Y X"
+                !by     $59,$50,$41,$50,$41,$50,$49,$53   ; "Y P A P A P I S"
+                !by     $58,$59,$58,$41,$53,$41,$43,$44   ; "X Y X A S A C D"
+
+LC204:          !by     $08,$84,$81,$22,$21,$26,$20,$80
+LC20C:          !by     $03,$20,$1C,$14,$14,$10,$04,$0C
+
 ; --------- SMON START --------------------------------------
 BREAK:          cld
                 lda     #$08
@@ -356,6 +364,7 @@ BREAK:          cld
                 sta     BKGRND                          ; screen color  
                 lda     #$03
                 sta     COLOR                           ; charcolor
+
                 ldx     #$05
 BREAK2:         pla
                 sta     PCHSAVE,x                       ; save stack
@@ -367,10 +376,10 @@ BREAK2:         pla
 BREAK3:         dec     PCLSAVE                         ; PC low  
                 tsx
                 stx     SPSAVE
-                lda     #$52
-                jmp     CMDSTORE
+                lda     #$52                            ; "R"-command
+                jmp     CMDSTORE                        ; execute R-command
 ;
-GETSTART:       jsr     GETRET
+GETSTART:       jsr     GETRET                          ; check for return
                 beq     GETSTRTS
 GETSTART1:      jsr     GETADR1
                 sta     PCLSAVE
@@ -388,7 +397,7 @@ GET12ADR:       jsr     GETADR1
                 sta     $FD
                 lda     #$FF
                 sta     $FE
-                jsr     GETRET
+                jsr     GETRET                          ; check for return
                 bne     GETADR
                 sta     TASTBUF
                 inc     $C6
@@ -436,34 +445,35 @@ SKIPSPACE:      jsr     GETCHRERR
                 dec     $D3
                 rts
 ;
-GETRET:         jsr     CHRIN
-                dec     $D3
-                cmp     #$0D
+GETRET:         jsr     CHRIN                           ; get input
+                dec     $D3                             ; 
+                cmp     #$0D                            ; await RETURN
 GETBRTS:        rts
 ; --------- GET INPUT AND AWAIT RETURN ----------------------
-GETCHRERR:      jsr     CHRIN                           ; get char
+GETCHRERR:      jsr     CHRIN                           ; get input
                 cmp     #$0D                            ; await RETURN  
-                bne     GETBRTS
+                bne     GETBRTS                         ; not CR
 ; --------- Faulty Userinput -------------------------------- 
 ERROR:          lda     #$3F                            ; "?"
                 jsr     CHROUT                           
+
 EXECUTE:        ldx     SPSAVE                         
                 txs
                 ldx     #$00
                 stx     $C6
-                jsr     RETURN
+                jsr     RETURN                          ; next line
                 lda     ($D1,x)
 
 !ifdef PLUS {
-                ldx     #$06
-LC2E5:          cmp     HCMDTAB,x
-                beq     EXEC1
-                dex
-                bpl     LC2E5
-                lda     #$2E                            ;"."
-                jsr     CHROUT                          ; drop point
+                ldx     #$06                            ; amount of commands
+CHKHCMD:        cmp     HCMDTAB,x                       ; check for hidden command
+                beq     EXEC1                           ; if found, execute
+                dex                                     ; 
+                bpl     CHKHCMD                         ; check for next command
+                lda     #$2E                            ; "."
+                jsr     CHROUT                          ; draw point
 EXEC1:          jsr     GETCHRERR                       ; await next input
-                cmp     #$2E                            ;"." 
+                cmp     #$2E                            ; "." 
                 beq     EXEC1
                 jmp     LINSTORE
 NEXT:           jmp     MORECMD
@@ -484,24 +494,25 @@ EXEC1:          jsr     GETCHRERR
                 beq     EXEC1
 }
 
-CMDSTORE:       sta     COMMAND
-                and     #$7F
-                ldx     #$20
+CMDSTORE:       sta     COMMAND                         ; store command
+                and     #$7F                            ; delete bit 7
+                ldx     #$20                            ; amount of commands
 ; --------- Check User Input --------------------------------
 CMDSEARCH:      cmp     CMDTBL-1,x                      ; compare users char
                 beq     CMDFOUND                        ; matched
                 dex
-                bne     CMDSEARCH
+                bne     CMDSEARCH                       ; repaet compare
 
 !ifdef PLUS {
-                beq     NEXT
+                beq     NEXT                            ; check for additonal plus commands
 } else {
-                beq     ERROR        
+                beq     ERROR                           ; command unknown        
 }
 
 CMDFOUND:       jsr     CMDEXEC                         ; fetch routine offset
-                jmp     EXECUTE
-;
+                jmp     EXECUTE                         ; go back, wait for next input
+
+; --------- get address according command char and execute --
 CMDEXEC:        txa
                 asl
                 tax
@@ -511,50 +522,52 @@ CMDEXEC:        txa
                 dex
                 lda     CMDS-2,x                        ; high address
                 pha                                     ; on stack 
-                rts
-;
-HEXOUT:         lda     PCH
-                jsr     HEXOUT1
-                lda     PCL
-HEXOUT1:        pha
+                rts                                     ; jump to execute command 
+; --------- output PC as 4 digit hex -----------------------
+HEXOUT:         lda     PCH                             ; load PC high byte
+                jsr     HEXOUT1                         ; output 2 digit hex address
+                lda     PCL                             ; load PC low byte
+; --------- output value as 2 digit hex -----------------------
+HEXOUT1:        pha                                     ; save byte
+                lsr                                     ; shift 4 times to get low nibble
                 lsr
                 lsr
                 lsr
-                lsr
-                jsr     HEXOUT2
-                pla
-                and     #$0F
-HEXOUT2:        cmp     #$0A
-                bcc     HEXOUT3
-                adc     #$06
-HEXOUT3:        adc     #$30
-                jmp     CHROUT
-;
+                jsr     HEXOUT2                         ; output one nibble
+                pla                                     ; get back saved value
+                and     #$0F                            ; mask low nibble
+HEXOUT2:        cmp     #$0A                            ; compare
+                bcc     HEXOUT3                         ; output as number
+                adc     #$06                            ; add 6 for letter
+HEXOUT3:        adc     #$30                            ; add $30
+                jmp     CHROUT                          ; output
+; --------- output a char with leading CR ---------------------
 CHARRET:        lda     #$0D                            ; next line
-CHARR1:         jsr     CHROUT
-                txa
-                jmp     CHROUT
-;
+CHARR1:         jsr     CHROUT                          ; output
+                txa                                     ; get value from x
+                jmp     CHROUT                          ; output
+; --------- output 2 x space ----------------------------------
 SPACE2:         jsr     SPACE
+; --------- output space --------------------------------------
 SPACE:          lda     #$20                            ; space
                 jmp     CHROUT
-;
+; --------- output CR -----------------------------------------
 RETURN:         lda     #$0D                            ; next line
                 jmp     CHROUT                         
-;
-PRINT:          sta     $BB
-                sty     $BC
-                ldy     #$00
-PRINT1:         lda     ($BB),y
-                beq     PRINT2
-                jsr     CHROUT
-                iny
-                bne     PRINT1
+; --------- print string from address in a,y ------------------
+PRINT:          sta     $BB                             ; pointer to address low byte
+                sty     $BC                             ; pointer to address high byte
+                ldy     #$00                            ; counter
+PRINT1:         lda     ($BB),y                         ; get byte from address
+                beq     PRINT2                          ; if 0 then end
+                jsr     CHROUT                          ; otherwise print
+                iny                                     ; increase counter
+                bne     PRINT1                          ; more to print
 PRINT2:         rts
-;
-PCINC:          inc     PCL
-                bne     PCRTS
-                inc     PCH
+; --------- increase PC -------------------------------------
+PCINC:          inc     PCL                             ; increase low byte
+                bne     PCRTS                           ; not 0, then finish
+                inc     PCH                             ; otherwise increase also the high byte
 PCRTS:          rts
 ; --------- EXIT (X) ----------------------------------------
 EXIT:           lda     #$0E                            ; restore 
@@ -571,22 +584,22 @@ EXIT:           lda     #$0E                            ; restore
 REGISTER:       ldy     #>REGHEAD
                 lda     #<REGHEAD
                 jsr     PRINT
-                ldx     #$3B
-                jsr     CHARRET
-                lda     PCHSAVE
+                ldx     #$3B                            ; ";"
+                jsr     CHARRET                         ; print on screen
+                lda     PCHSAVE                         ; PC high byte
                 sta     PCH
-                lda     PCLSAVE
+                lda     PCLSAVE                         ; PC low byte
                 sta     PCL
-                jsr     HEXOUT
-                jsr     SPACE
+                jsr     HEXOUT                          ; output as 4 digit hex
+                jsr     SPACE                           ; output space
                 ldx     #$FB
 REGISTER2:      lda     $01AF,x
-                jsr     HEXOUT1
-                jsr     SPACE
+                jsr     HEXOUT1                         ; output Register values as 2 digit hex values
+                jsr     SPACE                           ; output space
                 inx
                 bne     REGISTER2
-                lda     SRSAVE
-                jmp     CHNGBIN
+                lda     SRSAVE                          ; output space
+                jmp     CHNGBIN                         ; output SR as bin
 ; --------- SEMIS (;) ---------------------------------------
 SEMIS:          jsr     GETSTART1
                 ldx     #$FB
@@ -595,7 +608,7 @@ SEMIS1:         jsr     GETCHRERR
                 sta     $01AF,x
                 inx
                 bne     SEMIS1
-                jsr     SPACE
+                jsr     SPACE                           ; output space
                 lda     SRSAVE,x
                 jmp     CHNGBIN
 CHNGBIN:        sta     FLAG
@@ -627,12 +640,12 @@ GO2:            lda     $01AE,x
 MEMDUMP:        jsr     GET12ADR
 MEMDUMP1:       ldx     #$3A                            ; ':'
                 jsr     CHARRET
-                jsr     HEXOUT
+                jsr     HEXOUT                          ; output as 4 digit hex
                 ldy     #$20
                 ldx     #$00
-MEMDUMP2:       jsr     SPACE
+MEMDUMP2:       jsr     SPACE                           ; output space
                 lda     (PCL,x)
-                jsr     HEXOUT1
+                jsr     HEXOUT1                         ; output 2 digit hex address
                 lda     (PCL,x)
                 jsr     ASCII
                 bne     MEMDUMP2
@@ -698,7 +711,7 @@ SCANKEY:        jsr     GETIN
                 beq     STOP
                 pla
 SCANRTS:        rts
-STOP:           jmp     EXECUTE
+STOP:           jmp     EXECUTE                         ; go back, wait for next input
 ;
 PRINTER1:       ldy     #$28
 PRINTER:        bit     COMMAND
@@ -731,13 +744,13 @@ LC4CB:          ldy     #$00
                 bmi     LC4D5
                 bvc     LC4E1
 LC4D5:          ldx     #$1F
-LC4D7:          cmp     LC13C,x
+LC4D7:          cmp     LC13A+2,x
                 beq     LC50B
                 dex
                 cpx     #$15
                 bne     LC4D7
 LC4E1:          ldx     #$04
-LC4E3:          cmp     LC149,x
+LC4E3:          cmp     LC14A-1,x
                 beq     LC509
                 cmp     LC14D,x
                 beq     LC50B
@@ -819,7 +832,7 @@ LC564:          jsr     LC58C
                 bne     LC586
                 nop
 LC576:          jsr     PRINTER1
-                jsr     RETURN
+                jsr     RETURN                          ; next line
                 ldx     #$23
                 lda     #$2D
 LC580:          jsr     CHROUT
@@ -830,14 +843,14 @@ LC586:          jsr     CONTIN
                 rts
 LC58C:          ldx     #$2C
                 jsr     CHARRET
-                jsr     HEXOUT
-                jsr     SPACE
+                jsr     HEXOUT                          ; output as 4 digit hex
+                jsr     SPACE                           ; output space
 LC597:          jsr     LC675
                 jsr     LC4CB
-                jsr     SPACE
+                jsr     SPACE                           ; output space
 LC5A0:          lda     (PCL),y
-                jsr     HEXOUT1
-                jsr     SPACE
+                jsr     HEXOUT1                         ; output 2 digit hex address
+                jsr     SPACE                           ; output space
                 iny
                 cpy     BEFLEN
                 bne     LC5A0
@@ -846,8 +859,8 @@ LC5A0:          lda     (PCL),y
                 sbc     BEFLEN
                 tax
                 beq     LC5BE
-LC5B5:          jsr     SPACE2
-                jsr     SPACE
+LC5B5:          jsr     SPACE2                          ; output 2 x space
+                jsr     SPACE                           ; output space
                 dex
                 bne     LC5B5
 LC5BE:
@@ -892,16 +905,16 @@ LC5DA:          bit     FLAG
                 ldy     BEFLEN
                 jsr     LC693
                 jsr     LC4CB
-LC607:          lda     LC15B,x
+LC607:          lda     LC15C-1,x
                 jsr     CHROUT
-                lda     LC193,x
+                lda     LC194-1,x
                 jsr     CHROUT
-                lda     LC1CB,x
+                lda     LC1CC-1,x
 LC616:          jsr     CHROUT
                 lda     #$20
                 bit     ADRCODE
                 beq     LC622
-                jsr     SPACE2
+                jsr     SPACE2                          ; output 2 x space
 LC622:          ldx     #$20
                 lda     #$04
                 bit     ADRCODE
@@ -923,7 +936,7 @@ LC639:          jsr     LC52C
                 jsr     CHROUT
                 ldy     #$01
 LC64C:          lda     $00AD,y
-                jsr     HEXOUT1
+                jsr     HEXOUT1                         ; output 2 digit hex address
                 dey
                 bne     LC64C
 LC655:          ldy     #$03
@@ -997,15 +1010,15 @@ ASSEMBLER:      jsr     GETADR1
                 sta     $FD
                 lda     PCH
                 sta     $FE
-LC6DA:          jsr     RETURN
+LC6DA:          jsr     RETURN                          ; next line
 LC6DD:          jsr     LC6E4
                 bmi     LC6DD
                 bpl     LC6DA
 LC6E4:          lda     #$00
                 sta     $D3
-                jsr     SPACE
-                jsr     HEXOUT
-                jsr     SPACE
+                jsr     SPACE                           ; output space
+                jsr     HEXOUT                          ; output as 4 digit hex
+                jsr     SPACE                           ; output space
                 jsr     CHRIN
                 lda     #$01
                 sta     $D3
@@ -1077,17 +1090,17 @@ LC777:          inx
                 bne     LC76A
                 ldx     #$38
 LC77C:          lda     $A6
-                cmp     LC15B,x
+                cmp     LC15C-1,x
                 beq     LC788
 LC783:          dex
                 bne     LC77C
                 dex
                 rts
 LC788:          lda     $A7
-                cmp     LC193,x
+                cmp     LC194-1,x
                 bne     LC783
                 lda     $A8
-                cmp     LC1CB,x
+                cmp     LC1CC-1,x
                 bne     LC783
                 lda     LC111,x
                 sta     BEFCODE
@@ -1149,8 +1162,8 @@ LC810:          lda     #$1C
                 lda     BEFCODE
                 cmp     #$20
                 beq     LC828
-LC81F:          ldx     LC203,y
-                lda     LC20B,y
+LC81F:          ldx     LC204-1,y
+                lda     LC20C-1,y
                 jsr     LC681
 LC828:          dey
                 bne     LC81F
@@ -1195,7 +1208,7 @@ LSI:            jsr     GETCHRERR
                 lda     COMMAND
                 cmp     #$53
                 beq     SAVE
-LOAD_S:         jsr     GETRET
+LOAD_S:         jsr     GETRET                          ; check for return
                 beq     LOAD1
                 ldx     #$C3
                 jsr     GETADR
@@ -1216,7 +1229,7 @@ ADDSUB:         jsr     GETADR1
                 lsr
                 php
                 jsr     GETADR
-                jsr     RETURN
+                jsr     RETURN                          ; next line
                 plp
                 bcs     LC8BA
                 lda     $FD
@@ -1243,14 +1256,14 @@ LC8C5:          sty     PCH
                 jsr     LC675
                 lda     PCH
                 bne     LC8E8
-                jsr     SPACE2
+                jsr     SPACE2                          ; output 2 x space
                 lda     PCL
-                jsr     HEXOUT1
+                jsr     HEXOUT1                         ; output 2 digit hex address
                 lda     PCL
                 jsr     CHNGBIN
                 beq     LC8EB
-LC8E8:          jsr     HEXOUT
-LC8EB:          jsr     SPACE
+LC8E8:          jsr     HEXOUT                          ; output as 4 digit hex
+LC8EB:          jsr     SPACE                           ; output space
                 ldx     #$90
                 lda     $01
                 sta     MEM
@@ -1329,7 +1342,7 @@ LC975:          lda     DATATAB,x
                 sta     FLAG,x
                 dex
                 bpl     LC975
-DATALOOP:       jsr     RETURN
+DATALOOP:       jsr     RETURN                          ; next line
                 ldx     FLAG
                 lda     ADRCODE
                 jsr     INTOUT
@@ -1470,8 +1483,8 @@ LCA6B:          jsr     LC4CB
                 sta     (PCL),y
                 eor     $B5
                 bpl     LCAAE
-                jsr     RETURN
-                jsr     HEXOUT
+                jsr     RETURN                          ; next line
+                jsr     HEXOUT                          ; output as 4 digit hex
 LCA9B:          bit     ADRCODE
                 bpl     LCAAE
                 lda     (PCL),y
@@ -1491,10 +1504,10 @@ LCAAE:          jsr     LC66A
 KONTROLLE:      jsr     GET12ADR
 LCABA:          ldx     #$27
                 jsr     CHARRET
-                jsr     HEXOUT
+                jsr     HEXOUT                          ; output as 4 digit hex
                 ldy     #$08
                 ldx     #$00
-                jsr     SPACE
+                jsr     SPACE                           ; output space
 LCAC9:          lda     (PCL,x)
                 jsr     ASCII
                 bne     LCAC9
@@ -1528,8 +1541,8 @@ LCAFA:          lda     (PCL,x)
                 bne     LCAFA
                 inc     $FE
                 bne     LCAFA
-LCB0B:          jsr     SPACE
-                jmp     HEXOUT
+LCB0B:          jsr     SPACE                           ; output space
+                jmp     HEXOUT                          ; output as 4 digit hex
 ; --------- FIND (F) ----------------------------------------
 FIND:           lda     #$FF
                 ldx     #$04
@@ -1551,21 +1564,21 @@ LCB27:          stx     $A9
                 cmp     #$2C
                 bne     LCB3B
                 jsr     GET2ADR
-LCB3B:          jsr     RETURN
+LCB3B:          jsr     RETURN                          ; next line
 LCB3E:          ldy     $A9
 LCB40:          lda     (PCL),y
                 jsr     LCBD6
                 bne     LCB5F
                 dey
                 bpl     LCB40
-                jsr     HEXOUT
-                jsr     SPACE
+                jsr     HEXOUT                          ; output as 4 digit hex
+                jsr     SPACE                           ; output space
                 ldy     $D3
                 cpy     #$24
                 bcc     LCB5F
                 jsr     PRINTER1
                 jsr     TASTE1
-                jsr     RETURN
+                jsr     RETURN                          ; next line
 LCB5F:          jsr     CMPEND
                 bcc     LCB3E
                 ldy     #$27
@@ -1636,40 +1649,40 @@ LCBF0:          rts
 ; --------- FCOM part from LCBF1 to LCE08 -------------------
 ; -----------------------------------------------------------
 !ifdef FCOM {
-LCBF1:          lda     #$36
+LCBF1:          lda     #$36                            ; RAM-config for disk command
                 sta     $01
                 ldx     #$00
-LCBF7:          lda     FTEXT,x
-                beq     LCC02
-                jsr     CHROUT
-                inx
-                bne     LCBF7
-LCC02:          jsr     RETURN
-LCC05:          ldx     #$3e
-LCC07:          jsr     CHARRET
-LCC0A:          jsr     CHRIN
-                cmp     #$3e
-                beq     LCC0A
-                cmp     #$20
-                beq     LCC0A
-                ldx     #$05
-LCC17:          cmp     LCDCE,x
-                beq     LCC25
-                dex
-                bne     LCC17
-                jsr     RETURN
-                jmp     LCC05
-LCC25:          txa
+PRNTXT:         lda     FTEXT,x                         ; pointer to ">FLOPPY-MONITOR>"
+                beq     PRNRET                          ; last char, print return
+                jsr     CHROUT                          ; print
+                inx                                     ;
+                bne     PRNTXT                          ; next char
+PRNRET:         jsr     RETURN                          ; next line
+FCMDLOOP:       ldx     #$3e                            ; ">"
+FCMDLOOP2:      jsr     CHARRET                         ; output to screen
+GETFCMD:        jsr     CHRIN                           ; get Input
+                cmp     #$3e                            ; cmp ">"
+                beq     GETFCMD                         ; ignore
+                cmp     #$20                            ; space?
+                beq     GETFCMD                         ; ignore
+                ldx     #$05                            ; load x with 5 possible commands
+CHKTBL:         cmp     FCMDTBL,x                       ; check according table
+                beq     FCMDFND                         ; it is a command
+                dex                                     ; decrement x
+                bne     CHKTBL                          ; check more
+                jsr     RETURN                          ; unknown command, next line
+                jmp     FCMDLOOP                        ; go output '>' CR and wait for command
+FCMDFND:        txa
                 asl
                 tax
                 inx
-                lda     LCDD2,x
+                lda     FADDTBL-2,x
                 pha
                 dex
-                lda     LCDD2,x
+                lda     FADDTBL-2,x
                 pha
                 rts
-LCC33:          jsr     GETRET
+LCC33:          jsr     GETRET                          ; check for return
                 bne     LCC42
                 lda     #$00
                 sta     LCDC3
@@ -1677,7 +1690,7 @@ LCC33:          jsr     GETRET
                 beq     LCC5C
 LCC42:          jsr     GETBYT
                 sta     LCDC4
-                jsr     GETRET
+                jsr     GETRET                          ; check for return
                 bne     LCC54
                 lda     #$00
                 sta     LCDC3
@@ -1715,15 +1728,15 @@ MEMDP:          jsr     LCC33
 LCC99:          ldx     #$3a
                 jsr     CHARRET
                 lda     LCDC4
-                jsr     HEXOUT1
+                jsr     HEXOUT1                         ; output 2 digit hex address
                 lda     LCDC3
-                jsr     HEXOUT1
+                jsr     HEXOUT1                         ; output 2 digit hex address
                 ldy     #$20
                 ldx     #$00
-                jsr     SPACE
-LCCB1:          jsr     SPACE
+                jsr     SPACE                           ; output space
+LCCB1:          jsr     SPACE                           ; output space
                 lda     (PCL,x)
-                jsr     HEXOUT1
+                jsr     HEXOUT1                         ; output 2 digit hex address
                 lda     (PCL,x)
                 jsr     ASCII
                 bne     LCCB1
@@ -1744,7 +1757,7 @@ LCCD4:          plp
 LCCE0:          jsr     LCD87
                 jsr     STOPT
                 bne     LCC99
-                jmp     LCC02
+                jmp     PRNRET                          ; print return
 ; --------- HIDDEN CMD COLON (:) ----------------------------        
 H_COL:          jsr     GETADR1
                 lda     PCL
@@ -1762,7 +1775,7 @@ LCD02:          jsr     GETCHRERR
                 bne     LCD02
                 jsr     CLRCHN
                 jsr     LCFBC
-                jmp     LCC07
+                jmp     FCMDLOOP2
 LCD19:          jsr     LCD77
                 ldx     #$0f
                 jsr     CHKOUT
@@ -1782,7 +1795,7 @@ MEMCP:          jsr     GETADR1
                 lda     $fe
                 sta     LCDCD
                 lda     #$20
-                sta     LCDCE
+                sta     FCMDTBL
 LCD46:          jsr     LCD19
                 ldy     #$00
 LCD4B:          lda     (PCL),y
@@ -1802,8 +1815,8 @@ LCD4B:          lda     (PCL),y
 LCD69:          jsr     CLRCHN
                 jsr     LCFBC
                 lda     #$08
-                sta     LCDCE
-                jmp     LCC02
+                sta     FCMDTBL
+                jmp     PRNRET                          ; print return
 LCD77:          lda     #$0f
                 tay
                 ldx     #$08
@@ -1815,7 +1828,7 @@ LCD87:          jsr     GETIN
                 beq     LCD87
                 rts
 ; --------- READ ERR-CH (@) ---------------------------------
-ERRCH:          jsr     GETRET
+ERRCH:          jsr     GETRET                          ; check for return
                 bne     LCD95
                 jmp     DCF86
 LCD95:          lda     #$08
@@ -1827,7 +1840,7 @@ LCD9F:          jsr     CHRIN
                 cmp     #$0d
                 bne     LCD9F
                 jsr     $ffae
-                jmp     LCC02
+                jmp     PRNRET                          ; print return
 ; --------- f-EXIT (X) --------------------------------------
 FEXIT:          jmp     DMON
 
@@ -1841,10 +1854,9 @@ LCDC4           !by     $00
 MWTXT:          !by     $4d,$2d,$57                     ; "M-W"
 LCDCC:          !by     $00
 LCDCD:          !by     $00                 
-LCDCE:          !by     $08,$3A,$4d,$56                 ; ".:MV"
-LCDD2:          !by     $40,$58                         ; "@X"
+FCMDTBL:        !by     $08,$3A,$4d,$56,$40,$58         ; ".:MV@X"
 
-                !by     <H_COL-1
+FADDTBL:        !by     <H_COL-1
                 !by     >H_COL-1
                 !by     <MEMDP-1
                 !by     >MEMDP-1
@@ -1926,8 +1938,8 @@ LCC38:          pla
 LCC5B:          lda     #>BREAK
                 sta     BRK_HI
                 lda     #$52
-                jmp     CMDSTORE
-LCC65:          jsr     RETURN
+                jmp     CMDSTORE                        ; store and compare command
+LCC65:          jsr     RETURN                          ; next line
                 lda     VIC_CTRL1
                 ora     #$10
                 sta     VIC_CTRL1
@@ -1969,7 +1981,7 @@ LCCA5:          lda     IRQ_LO
                 beq     LCCC5
 LCCBD:          jsr     LCC65
                 lda     #$52
-                jmp     CMDSTORE
+                jmp     CMDSTORE                        ; store and compare command
 LCCC5:          bit     $02BC
                 bvc     LCCE9
                 sec
@@ -1999,22 +2011,22 @@ LCCFD:          jsr     LCC65
                 sta     PCL
                 lda     #$02
                 sta     PCH
-                jsr     SPACE
+                jsr     SPACE                           ; output space
                 ldy     #$00
 LCD0D:          lda     (PCL),y
-                jsr     HEXOUT1
+                jsr     HEXOUT1                         ; output 2 digit hex address
                 iny
                 cpy     #$07
                 beq     LCD20
                 cpy     #$01
                 beq     LCD0D
-                jsr     SPACE
+                jsr     SPACE                           ; output space
                 bne     LCD0D
 LCD20:          lda     PCLSAVE
                 ldx     PCHSAVE
                 sta     PCL
                 stx     PCH
-                jsr     SPACE2
+                jsr     SPACE2                          ; output 2 x space
                 jsr     LC4CB
 
 !ifdef ILOC {
@@ -2111,7 +2123,7 @@ LCDD0:          jsr     GETBYT
                 sta     $02BD
                 jsr     GETBYT
                 sta     $02BF
-                jmp     EXECUTE
+                jmp     EXECUTE                         ; go back, wait for next input
 LCDE5:          lda     TRACEBUF
                 ldx     $02B9
                 sta     IRQ_LO
@@ -2140,7 +2152,7 @@ LCE08:          rts
 ; LCE09
 ZCMD:           lda     #$80                            ; set Flag
                 !by     $2c
-; --------- ZICHENDATEN EXT (H) -----------------------------
+; --------- ZEICHENDATEN EXT (H) -----------------------------
 HCMD:           lda     #$00
                 sta     ADRCODE
                 jsr     GET12ADR                        ; start/end-address
@@ -2150,7 +2162,7 @@ L1:             bit     ADRCODE
                 !by     $2C
 W8:             ldx     #HCH
                 jsr     CHARRET
-                jsr     HEXOUT                          ; print PC
+                jsr     HEXOUT                          ; print PC as 4 digit hex
                 ldy     #$06                            ; column #6
 L2:             ldx     #$00
                 lda     (PCL,x)
@@ -2213,12 +2225,12 @@ LCE88:          !by     $2c
 UCMD:           lda     #$00
                 sta     ADRCODE
                 jsr     GET12ADR
-L5:             jsr     RETURN
+L5:             jsr     RETURN                          ; next line
                 bit     ADRCODE
                 bpl     U
                 lda     #HCN                            ; hidden command
                 jsr     CHROUT
-                jsr     HEXOUT
+                jsr     HEXOUT                          ; output as 4 digit hex
                 ldy     #$08                            ; column 8
                 !by     $2c
 U:              ldy     #$00   
@@ -2346,20 +2358,21 @@ E1:             lda     ($FD),y
                 sta     $01
                 cli
                 rts
-;
+; print last command on screen
 LINSTORE:       pha                                     ; remember command
                 cmp     #$4A                            ; "J"
-                bne     STORE
-                ldy     #$27
-G1:             lda     $0200,y
+                bne     STORE                           ; check other commands
+                ldy     #$27                            ; char amount
+G1:             lda     $0200,y                         ; get char from buffer
                 sta     ($D1),y                         ; print line on screen
-                dey
-                bpl     G1
-                pla
+                dey                                     ; next
+                bpl     G1                              ; not last
+                pla                                     ; get last command back
                 dec     $D6                             ; Cursor up
-                jmp     EXECUTE
-STORE:          ldy     #$06
-G3:             cmp     OUTCMDS,y
+                jmp     EXECUTE                         ; go back, wait for next input
+;
+STORE:          ldy     #$06                            ; amount of commands
+G3:             cmp     OUTCMDS,y                       ; check for "()!EYQ"
                 bne     W3
                 ldy     #$27
 G2:             lda     ($D1),y
@@ -2369,7 +2382,7 @@ G2:             lda     ($D1),y
 W3:             dey
                 bpl     G3
                 pla                                     ; get command back
-                jmp     CMDSTORE
+                jmp     CMDSTORE                        ; store and compare command
 ;
 MORECMD:        ldx     #$0A
 B1:             cmp     NEWCMDS-1,x
@@ -2378,7 +2391,7 @@ B1:             cmp     NEWCMDS-1,x
                 bne     B1
                 jmp     ERROR
 FOUND:          jsr     CMDEXEC2
-                jmp     EXECUTE
+                jmp     EXECUTE                         ; go back, wait for next input
 CMDEXEC2:       txa
                 asl
                 tax
@@ -2499,7 +2512,7 @@ LCE7A:          jsr     GETCHRERR
                 sta     (PCL,x)
                 jsr     ASCII
                 bne     LCE7A
-                jsr     RETURN
+                jsr     RETURN                          ; next line
                 jmp     DCE24
 LCE8D:          jsr     LCF55
                 lda     SAVEX
@@ -2514,7 +2527,7 @@ LCE9A:          ldx     #$00
                 sta     $02C4
                 txa
                 jmp     LCECB
-LCEAD:          jsr     GETRET
+LCEAD:          jsr     GETRET                          ; check for return
                 bne     LCEB5
                 jmp     LCE8D
 LCEB5:          jsr     GETBYT
@@ -2610,7 +2623,7 @@ DCF86:          jsr     DCF8C
                 jmp     LCFB6
 DCF8C:          lda     #$00
                 sta     $90
-                jsr     RETURN
+                jsr     RETURN                          ; next line
                 lda     #$08
                 jsr     TALK
                 lda     #$6f
@@ -2636,7 +2649,7 @@ LCFC6:          lda     #$06
                 sta     BORDER
                 lda     #$37
                 sta     $01
-                jmp     EXECUTE
+                jmp     EXECUTE                         ; go back, wait for next input
 
 LCFD2:          !by     $3A,$52,$57,$4d,$58             ; ":RWMX" , new floppy commands
 
@@ -2679,15 +2692,18 @@ DCFF2:          !by     $42,$2d,$50,$20,$31,$33,$20,$30 ; "B-P 13 0"
 ; -----------------------------------------------------------
 !ifdef ILOC {
 ILLEGAL:
+; 6510 ilops
 LCE09:          !by     $2b,$4b,$6b,$8b,$9b,$ab,$bb,$cb
-                !by     $eb,$89,$93,$9f,$0b,$9c
-LCE17:          !by     $9e,$4e,$53,$52,$53,$52,$53,$4c
-                !by     $44,$49
-LCE21:          !by     $43,$4f,$4c,$4c,$52,$52,$41,$41
-                !by     $43,$53
-LCE2B:          !by     $52,$50,$4f,$41,$45,$41,$58,$58
-                !by     $50,$43
-LCE35:          !by     $41,$25,$26,$20,$21,$82,$80,$81
+                !by     $eb,$89,$93,$9f,$0b,$9c,$9e
+   
+; ilops char
+LCE18:          !by     $4e,$53,$52,$53,$52,$53,$4c,$44,$49,$43 ; N S R S R S L D I C   ; N
+
+LCE22:          !by     $4f,$4c,$4c,$52,$52,$41,$41,$43,$53,$52 ; O L L R R A A C S R   ; O
+
+LCE2C:          !by     $50,$4f,$41,$45,$41,$58,$58,$50,$43,$41 ; P O A E A X X P C A   ; P
+
+LCE36:          !by     $25,$26,$20,$21,$82,$80,$81
                 !by     $22,$21,$82
 LCE40:          !by     $81,$03,$13,$07,$17,$1b,$0f,$1f
                 !by     $97,$d7,$bf
@@ -2759,7 +2775,7 @@ ICEC7:          lda     (PCL),y
                 beq     LCED4
                 dex
                 bne     ICEC7
-LCED4:          lda     LCE35,x
+LCED4:          lda     LCE36-1,x
                 sta     ADRCODE
                 lda     LCE4B,x
                 sta     BEFLEN
@@ -2767,19 +2783,19 @@ LCED4:          lda     LCE35,x
 _ILOCD:         ldy     #$00
                 ldx     BEFCODE
                 beq     ICEEB
-                jsr     SPACE
+                jsr     SPACE                           ; output space
                 jmp     LC5DA
 ICEEB:          ldx     $02c5
                 bne     LCEF6
-                jsr     SPACE
+                jsr     SPACE                           ; output space
                 jmp     LC5C9
 LCEF6:          lda     #$2a
                 jsr     CHROUT
-                lda     LCE17,x
+                lda     LCE18-1,x
                 jsr     CHROUT
-                lda     LCE21,x
+                lda     LCE22-1,x
                 jsr     CHROUT
-                lda     LCE2B,x
+                lda     LCE2C-1,x
                 jmp     LC616
 
 }
