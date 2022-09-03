@@ -1,7 +1,8 @@
 ; ###############################################################
 ; #                                                             #
 ; #  SMON RELOCATABLE SOURCE CODE                               #       
-; #  Version 1.0.0.003 (2022.09.01)                             #
+; #  Version 1.1.1.004 (2022.09.03)                             #
+; #  Copyright (c) 2022 Claus Schlereth                         #
 ; #                                                             #  
 ; #  Based on the source code from: cbmuser                     #
 ; #  https://github.com/cbmuser/smon-reassembly                 #
@@ -15,14 +16,22 @@
 ; #  The PLUS-extension was written by:                         #
 ; #  Mark Richters                                              #
 ; #                                                             #
-; #  The SMON RELOCATABLE SOURCE CODE is public domain          #
+; #  The Ram-under-Rom function is based on a SMON version      #
+; #  called DUDZMON https://csdb.dk/release/?id=50473           #
+; #  provided to me by schumi, a member from FORUM64            #
+; #  https://www.forum64.de/wcf/index.php?user/15606-schumi/    #
+; #                                                             #
+; #  This version of the source code is under MIT License       #
 ; ###############################################################
 
 ; History:
 ; V1    =   Initial release
-; V1.0.0.001 =   re arrange some lables , add more comments
-; V1.0.0.002 =   add more comments
-; V1.0.0.003 =   add more comments
+; V1.0.0.001    =   add more comments, not released
+; V1.0.0.002    =   add more comments, not released
+; V1.0.0.003    =   re arrange some lables , add more comments
+; V1.1.0.003    =   start to add show ram under rom function, not released
+; V1.1.1.004    =   add the show ram under rom function, add more comments, re arrange code
+; 
 
 TASTBUF         = $0277
 COLOR           = $0286                         ; charcolor
@@ -114,33 +123,53 @@ HCN             = $21                           ; "!"
 ; - SELECT ONLY ONE VERSION BY UNCOMMENTING IT -
 ; if nothing is selected here, SMON will be compiled without any extension
 
-;FMON = 1        ; this is the FMON version, also named SMONFx000, this seems to be the 'normal' or initial one, including the base disc commands
-PLUS = 1        ; this is the PLUS version, also named SMONPx000, for the new function the FMON monitor is removed
-;ILOC = 1        ; this is the ILOC version, also named SMONIx000, this provides the function to show the illegal opcodes, the FMON is removed 
+;FMON = 1       ; this is the FMON version, also named SMONFx000, this seems to be the 'normal' or initial one, including the base disc commands
+PLUS = 1       ; this is the PLUS version, also named SMONPx000, for the new function the FMON monitor is removed
+;ILOC = 1       ; this is the ILOC version, also named SMONIx000, this provides the function to show the illegal opcodes, the FMON is removed 
 
-;FCOM = 1        ; this is the FCOM version, can named as SMONDx000, this has the extended Floppy cpmmands, the "Trace" function is removed
+;FCOM = 1       ; this is the FCOM version, can named as SMONDx000, this has the extended Floppy cpmmands, the "Trace" function is removed
 
-; define here the start address in memory
+; new extensions
+;RAM = 1        ; this is the PLUS version with activated ram under rom function, the "Trace" functions are removed
+;RAM1 = 1       ; this is the ILOC version including the functions of the RAM version
+; -----------------------------------------------------------
+; -------------------END SMON VERSION -----------------------
+; -----------------------------------------------------------
 
-        *= $c000
+; -----------------------------------------------------------
+; --------- define here the start address in memory ---------
+        *= $C000
+; -----------------------------------------------------------
 
 
-!ifdef FMON {
-    !to"build/SMONFx000.prg",cbm
+!ifdef RAM1 {
+    PLUS = 1
+    RAM = 1
+    ILOC = 1
+    !to"build/SMON-IR.prg",cbm
 } else {
-!ifdef PLUS {
-    !to"build/SMONPx000.prg",cbm
-} else {
-!ifdef ILOC {
-    !to"build/SMONIx000.prg",cbm
-} else {
-!ifdef FCOM {
-    !to"build/SMONDx000.prg",cbm
-} else {
-    !to"build/SMONBx000.prg",cbm
-}
-}
-}
+    !ifdef RAM {
+        PLUS = 1
+        !to"build/SMONRx000.prg",cbm
+    } else {
+        !ifdef FMON {
+            !to"build/SMONFx000.prg",cbm
+        } else {
+        !ifdef PLUS {
+            !to"build/SMONPx000.prg",cbm
+        } else {
+        !ifdef ILOC {
+            !to"build/SMONIx000.prg",cbm
+        } else {
+        !ifdef FCOM {
+            !to"build/SMONDx000.prg",cbm
+        } else {
+            !to"build/SMONBx000.prg",cbm
+        }
+        }
+        }
+        }
+    }
 }
 ; -----------------------------------------------------------
 ; ----------------------- CIA VERSION -----------------------
@@ -171,14 +200,16 @@ _brk_hb:        lda     #>BREAK
                 brk
 ; ------------------ here are the general commands ----------
 CMDTBL:         !by     $27,$23,$24,$25,$2C,$3A,$3B,$3D ;"'#$%,:;=" 
-                !by     $3F,$41,$42,$43,$44,$46,$47,$49 ;"=?ABCDFGI"
+                !by     $3F,$41,$42,$43,$44,$46,$47,$49 ;"?ABCDFGI"                
                 !by     $4B,$4C,$4D,$4F,$50,$52,$53     ;"KLMOPRS"
 
 ; depending of the selection, different commands are defined
 !ifdef FCOM {
                 !by     $00                             ; deactivate the trace command if FCOM is selected
 } else {
-                !by     $54                             ; "T"        
+!ifndef RAM {
+                !by     $54                             ; "T"    
+}        
 }
                 !by     $56,$57,$58                     ; "VWX"
 
@@ -241,8 +272,10 @@ CMDS:           !by     <TICK-1                         ; ' 01
                 !by     $00                             ; . 19
                 !by     $00
 } else {                                                ; the trace command is used in PLUS and FMON version
+!ifndef RAM {
                 !by     <TRACE-1                        ; T 19                        
-                !by     >TRACE-1        
+                !by     >TRACE-1
+}        
 }
                 !by     <VERSCHIEB-1                    ; V 1A
                 !by     >VERSCHIEB-1
@@ -250,7 +283,10 @@ CMDS:           !by     <TICK-1                         ; ' 01
                 !by     >WRITE-1
                 !by     <EXIT-1                         ; X 1C
                 !by     >EXIT-1
-
+!ifdef RAM1 {
+                !by     <ILLEGAL-1
+                !by     >ILLEGAL-1    
+}
 
 !ifdef PLUS {
 HCMDTAB:        !by     HCK,HCM,HCR,HCD,HCH,HCZ,HCN     ; "':;,()!"
@@ -280,14 +316,16 @@ FINDTAB:        !by     $41,$5A,$49,$52,$54             ; "AZIRT"
 FINDFLG:        !by     $80,$20,$40,$10,$00
 FINDFLG1:       !by     $02,$01,$01,$02,$00
 ; for generating basic lines
+
 SYS172:         !by     $91,$91,$0D
                 !by     $53,$D9,$31,$37,$32,$0D         ; "sY172." 
 DATATAB:        !by     $00,$7D                         ; basic line number 32000
                 !by     $4C                             ; jmp DATALOOP
                 !by     <DATALOOP
 BASJMP:         !by     >DATALOOP
+
 ; the register header
-REGHEAD:        !by     $0D,$0D,$20,$20,$50,$43,$20,$20 ; "..  PC  "  
+REGHEAD:        !by     $0D,$0D,$20,$2D,$50,$43,$2D,$20 ; ".. -PC- "  
                 !by     $53,$52,$20,$41,$43,$20,$58,$52 ; "SR AC XR"
                 !by     $20,$59,$52,$20,$53,$50,$20,$20 ; " YR SP  "
                 !by     $4E,$56,$2D,$42,$44,$49,$5A,$43 ; "NV-BDIZC"
@@ -359,12 +397,17 @@ BREAK:          cld
                 sta     IONO                            ; set drive #8
                 lda     #$04
                 sta     PRNNO                           ; set printer #4  
+!ifdef RAM {
+                lda     #$34
+                sta     $01
+                sta     $41 
+} else {
                 lda     #$06
                 sta     BORDER                          ; border and  
                 sta     BKGRND                          ; screen color  
                 lda     #$03
                 sta     COLOR                           ; charcolor
-
+}
                 ldx     #$05
 BREAK2:         pla
                 sta     PCHSAVE,x                       ; save stack
@@ -445,18 +488,31 @@ SKIPSPACE:      jsr     GETCHRERR
                 dec     $D3
                 rts
 ;
-GETRET:         jsr     CHRIN                           ; get input
+GETRET:         
+!ifdef RAM {
+                jsr     R_CHRIN                         ; get input
+} else {
+                jsr     CHRIN
+}
                 dec     $D3                             ; 
                 cmp     #$0D                            ; await RETURN
 GETBRTS:        rts
 ; --------- GET INPUT AND AWAIT RETURN ----------------------
-GETCHRERR:      jsr     CHRIN                           ; get input
+GETCHRERR:      
+!ifdef RAM {
+                jsr     R_CHRIN                         ; get input
+} else {
+                jsr     CHRIN
+}
                 cmp     #$0D                            ; await RETURN  
                 bne     GETBRTS                         ; not CR
 ; --------- Faulty Userinput -------------------------------- 
 ERROR:          lda     #$3F                            ; "?"
-                jsr     CHROUT                           
-
+!ifdef RAM {
+                jsr     R_CHROUT                           
+} else {
+                jsr     CHROUT
+}
 EXECUTE:        ldx     SPSAVE                         
                 txs
                 ldx     #$00
@@ -471,7 +527,11 @@ CHKHCMD:        cmp     HCMDTAB,x                       ; check for hidden comma
                 dex                                     ; 
                 bpl     CHKHCMD                         ; check for next command
                 lda     #$2E                            ; "."
-                jsr     CHROUT                          ; draw point
+!ifdef RAM {
+                jsr     R_CHROUT                        ; draw point
+} else {
+                jsr     CHROUT
+}
 EXEC1:          jsr     GETCHRERR                       ; await next input
                 cmp     #$2E                            ; "." 
                 beq     EXEC1
@@ -488,7 +548,7 @@ NEXT:           jmp     MORECMD
                 cmp     #$2C                            ; ","
                 beq     EXEC1
                 lda     #$2E                            ; "."
-                jsr     CHROUT
+                jsr     CHROUT               
 EXEC1:          jsr     GETCHRERR
                 cmp     #$2E                            ; "."
                 beq     EXEC1
@@ -540,27 +600,52 @@ HEXOUT2:        cmp     #$0A                            ; compare
                 bcc     HEXOUT3                         ; output as number
                 adc     #$06                            ; add 6 for letter
 HEXOUT3:        adc     #$30                            ; add $30
-                jmp     CHROUT                          ; output
+!ifdef RAM {
+                jmp     R_CHROUT                        ; output
+} else {
+                jmp     CHROUT
+}
 ; --------- output a char with leading CR ---------------------
 CHARRET:        lda     #$0D                            ; next line
-CHARR1:         jsr     CHROUT                          ; output
+CHARR1:
+!ifdef RAM {
+                jsr     R_CHROUT                        ; output
+} else {
+                jsr     CHROUT
+}
                 txa                                     ; get value from x
-                jmp     CHROUT                          ; output
+!ifdef RAM {
+                jmp     R_CHROUT                        ; output
+} else {
+                jmp     CHROUT
+}
 ; --------- output 2 x space ----------------------------------
 SPACE2:         jsr     SPACE
 ; --------- output space --------------------------------------
 SPACE:          lda     #$20                            ; space
+!ifdef RAM {
+                jmp     R_CHROUT                        ; output
+} else {
                 jmp     CHROUT
+}
 ; --------- output CR -----------------------------------------
 RETURN:         lda     #$0D                            ; next line
-                jmp     CHROUT                         
+!ifdef RAM {
+                jmp     R_CHROUT                        ; output
+} else {
+                jmp     CHROUT
+}
 ; --------- print string from address in a,y ------------------
 PRINT:          sta     $BB                             ; pointer to address low byte
                 sty     $BC                             ; pointer to address high byte
                 ldy     #$00                            ; counter
 PRINT1:         lda     ($BB),y                         ; get byte from address
                 beq     PRINT2                          ; if 0 then end
-                jsr     CHROUT                          ; otherwise print
+!ifdef RAM {
+                jsr     R_CHROUT                        ; otherwise print
+} else {
+                jsr     CHROUT
+}                          
                 iny                                     ; increase counter
                 bne     PRINT1                          ; more to print
 PRINT2:         rts
@@ -570,13 +655,20 @@ PCINC:          inc     PCL                             ; increase low byte
                 inc     PCH                             ; otherwise increase also the high byte
 PCRTS:          rts
 ; --------- EXIT (X) ----------------------------------------
-EXIT:           lda     #$0E                            ; restore 
+EXIT:
+!ifdef RAM {
+                lda     #$37 
+                sta     $01
+                sta     $41
+} else {
+                lda     #$0E                            ; restore 
                 sta     COLOR                           ; system   
                 sta     BORDER                          ; colors  
                 lda     #$06                             
                 sta     BKGRND                           
                 lda     #$37                            ; default rom-config 
                 sta     $01
+}
                 ldx     SPSAVE                          ; restore stack  
                 txs 
                 jmp     WARMSTART                       ; basic warmstart 
@@ -614,7 +706,12 @@ SEMIS1:         jsr     GETCHRERR
 CHNGBIN:        sta     FLAG
                 lda     #$20
                 ldy     #$09
-CHANGB1:        jsr     CHROUT
+CHANGB1:
+!ifdef RAM {
+                jsr     R_CHROUT
+} else {
+                jsr     CHROUT
+}
                 asl     FLAG
                 lda     #$30
                 adc     #$00
@@ -622,7 +719,12 @@ CHANGB1:        jsr     CHROUT
                 bne     CHANGB1
                 rts
 ; --------- GO (G) ------------------------------------------
-GO:             jsr     GETSTART
+GO:
+!ifdef RAM {
+                jsr     R_GETSTART
+} else {
+                jsr     GETSTART
+}         
                 ldx     SPSAVE
                 txs
                 ldx     #$FA
@@ -705,9 +807,18 @@ TASTE2:         jsr     SCANKEY
                 inc     $C6
 TASTRTS:        rts
 ;
-SCANKEY:        jsr     GETIN
+SCANKEY:
+!ifdef RAM {
+                jsr     R_GETIN
+} else {
+                jsr     GETIN
+}
                 pha
+!ifdef RAM {
+                jsr     R_STOPT
+} else {
                 jsr     STOPT
+}                
                 beq     STOP
                 pla
 SCANRTS:        rts
@@ -719,7 +830,11 @@ PRINTER:        bit     COMMAND
                 sty     $C8
                 sty     $D0
                 lda     #$FF
+!ifdef RAM {
+                jsr     R_CLOSE
+} else {
                 jsr     CLOSE
+}                
                 lda     #$FF
                 sta     $B8
                 sta     $B9
@@ -729,15 +844,23 @@ PRINTER:        bit     COMMAND
                 ldx     #$00
                 stx     $D3
                 dex
+; ??????
                 jsr     CHKOUT
 PRLOOP:         jsr     CHRIN
                 jsr     CHROUT
                 cmp     #$0D
                 bne     PRLOOP
+!ifdef RAM {
+                jsr     R_CLRCHN
+} else {
                 jsr     CLRCHN
+}
                 lda     #$91
+!ifdef RAM {
+                jsr     R_CHROUT
+} else {
                 jmp     CHROUT
-
+}
 LC4CB:          ldy     #$00
                 lda     (PCL),y
                 bit     FLAG
@@ -833,9 +956,18 @@ LC564:          jsr     LC58C
                 nop
 LC576:          jsr     PRINTER1
                 jsr     RETURN                          ; next line
-                ldx     #$23
+!ifdef RAM {
+                ldx     #$13
+} else {
+                ldx     #$21
+}
                 lda     #$2D
-LC580:          jsr     CHROUT
+LC580:
+!ifdef RAM {
+                jsr     R_CHROUT
+} else {
+                jsr     CHROUT
+}
                 dex
                 bne     LC580
 LC586:          jsr     CONTIN
@@ -847,10 +979,18 @@ LC58C:          ldx     #$2C
                 jsr     SPACE                           ; output space
 LC597:          jsr     LC675
                 jsr     LC4CB
+!ifdef RAM {
+                jmp     SPCOC                           ; output opcode with leading space
+} else {
                 jsr     SPACE                           ; output space
+}
 LC5A0:          lda     (PCL),y
                 jsr     HEXOUT1                         ; output 2 digit hex address
+!ifdef RAM {
+                jmp     SPCOC                           ; output opcode with leading space
+} else {
                 jsr     SPACE                           ; output space
+}
                 iny
                 cpy     BEFLEN
                 bne     LC5A0
@@ -858,12 +998,13 @@ LC5A0:          lda     (PCL),y
                 sec
                 sbc     BEFLEN
                 tax
-                beq     LC5BE
+                beq     SPCOC                           ; output opcode with leading space
 LC5B5:          jsr     SPACE2                          ; output 2 x space
                 jsr     SPACE                           ; output space
                 dex
                 bne     LC5B5
-LC5BE:
+
+SPCOC:  ; output opcode with leading space
 ; if selected ILOC
 !ifdef ILOC {
                 jmp     _ILOCD
@@ -871,14 +1012,22 @@ LC5BE:
                 !by     $FF
 } else {
                 lda     #$20
-                jsr     CHROUT         
+!ifdef RAM {
+                jsr     R_CHROUT
+} else {
+                jsr     CHROUT
+}         
 }
                 ldy     #$00
                 ldx     BEFCODE
 LC5C7:          bne     LC5DA
 LC5C9:          ldx     #$03
 LC5CB:          lda     #$2A
+!ifdef RAM {
+                jsr     R_CHROUT
+} else {
                 jsr     CHROUT
+}
                 dex
                 bne     LC5CB
                 bit     FLAG
@@ -906,11 +1055,24 @@ LC5DA:          bit     FLAG
                 jsr     LC693
                 jsr     LC4CB
 LC607:          lda     LC15C-1,x
+!ifdef RAM {
+                jsr     R_CHROUT
+} else {
                 jsr     CHROUT
+}
                 lda     LC194-1,x
+!ifdef RAM {
+                jsr     R_CHROUT
+} else {
                 jsr     CHROUT
+}
                 lda     LC1CC-1,x
-LC616:          jsr     CHROUT
+LC616:
+!ifdef RAM {
+                jsr     R_CHROUT
+} else {
+                jsr     CHROUT
+}
                 lda     #$20
                 bit     ADRCODE
                 beq     LC622
@@ -921,11 +1083,19 @@ LC622:          ldx     #$20
                 beq     LC62C
                 ldx     #$28
 LC62C:          txa
+!ifdef RAM {
+                jsr     R_CHROUT
+} else {
                 jsr     CHROUT
+}
                 bit     ADRCODE
                 bvc     LC639
                 lda     #$23
+!ifdef RAM {
+                jsr     R_CHROUT
+} else {
                 jsr     CHROUT
+}
 LC639:          jsr     LC52C
                 dey
                 beq     LC655
@@ -933,7 +1103,11 @@ LC639:          jsr     LC52C
                 bit     ADRCODE
                 beq     LC64C
                 lda     #$4D
+!ifdef RAM {
+                jsr     R_CHROUT
+} else {
                 jsr     CHROUT
+}
                 ldy     #$01
 LC64C:          lda     $00AD,y
                 jsr     HEXOUT1                         ; output 2 digit hex address
@@ -982,7 +1156,12 @@ LC69A:          bne     LC6B8
                 sta     ADRCODE
 LC6A1:          lda     #$04
                 sta     $B5
-LC6A5:          jsr     CHRIN
+LC6A5:
+!ifdef RAM {
+                jsr     R_CHRIN
+} else {
+                jsr     CHRIN
+}
                 cmp     #$20
                 beq     LC6B9
                 cmp     #$24
@@ -1019,7 +1198,11 @@ LC6E4:          lda     #$00
                 jsr     SPACE                           ; output space
                 jsr     HEXOUT                          ; output as 4 digit hex
                 jsr     SPACE                           ; output space
+!ifdef RAM {
+                jsr     R_CHRIN
+} else {
                 jsr     CHRIN
+}
                 lda     #$01
                 sta     $D3
                 ldx     #$80
@@ -1034,7 +1217,12 @@ LC701:          stx     FLAG
                 bit     $02B1
                 bpl     LC717
                 ldx     #$0A
-LC711:          jsr     CHRIN
+LC711:
+!ifdef RAM {
+                jsr     R_CHRIN
+} else {
+                jsr     CHRIN
+}
                 dex
                 bne     LC711
 LC717:          lda     #$00
@@ -1155,7 +1343,12 @@ LC7E9:          sty     ADRCODE
                 jsr     LC681
                 lda     #$18
                 !by     $2C
-LC810:          lda     #$1C
+LC810:
+!ifdef RAM {
+                lda     #$CC
+} else {
+                lda     #$1C
+}
                 ldx     #$82
                 jsr     LC681
                 ldy     #$08
@@ -1215,12 +1408,20 @@ LOAD_S:         jsr     GETRET                          ; check for return
                 lda     #$00
                 sta     $B9
 LOAD1:          lda     #$00
+!ifdef RAM {
+                jmp     R_LDVEC
+} else {
                 jmp     (LOADVECT)
+}
 SAVE:           ldx     #$C1
                 jsr     GETADR
                 ldx     #$AE
                 jsr     GETADR
+!ifdef RAM {
+                jmp     R_SVVEC
+} else {
                 jmp     (SAVEVECT)
+}
 ; --------- ADD/SUB (？) -------------------------------------
 ADDSUB:         jsr     GETADR1
                 jsr     GETCHRERR
@@ -1305,7 +1506,11 @@ BEFDEC:         jsr     SKIPSPACE
 LC934:          stx     PCL
                 sta     PCH
                 tay
+!ifdef RAM {
+                jsr     R_CHRIN
+} else {
                 jsr     CHRIN
+}
                 cmp     #$3A
                 bcs     LC8C4
                 sbc     #$2F
@@ -1333,6 +1538,7 @@ LC948:          sta     $FD
                 plp
                 adc     #$00
                 jmp     LC934
+
 ; --------- BASICDATA (B) -----------------------------------
 BASICDATA:      jsr     GET2ADR
                 lda     #$37
@@ -1372,6 +1578,7 @@ LC9B5:          lda     SYS172-1,x
                 dex
                 bne     LC9B5
                 jmp     EXIT
+
 ; --------- OCCUPY (O) --------------------------------------
 OCCUPY:         jsr     GET2ADR
                 jsr     GETBYT
@@ -1519,7 +1726,12 @@ LCADA:          rts
 ; ???
 TICK:           jsr     GETADR1
                 ldy     #$03
-LCAE0:          jsr     CHRIN
+LCAE0:
+!ifdef RAM {
+                jsr     R_CHRIN
+} else {
+                jsr     CHRIN
+}
                 dey
                 bne     LCAE0
 LCAE6:          jsr     GETCHRERR
@@ -1558,7 +1770,11 @@ LCB1F:          cmp     FINDTAB-1,x
 LCB27:          stx     $A9
                 jsr     LCBB4
                 inx
+!ifdef RAM {
+                jsr     R_CHRIN
+} else {
                 jsr     CHRIN
+}
                 cmp     #$20
                 beq     LCB27
                 cmp     #$2C
@@ -1885,7 +2101,67 @@ FADDTBL:        !by     <H_COL-1
 ; -----------------------------------------------------------
 !ifndef FCOM {
 
-; --------- TRACE (T) ---------------------------------------
+!ifdef RAM {
+
+
+; --------- NEW CODE FOR RAM/ROM ----------------------------
+
+SWROM:          php
+                pha
+                lda     $01
+                sta     $41
+                lda     #$37
+                sta     $01
+                pla
+                plp
+                cli
+                rts
+SHRAM:          sei
+                php
+                pha
+                lda     $41
+                sta     $01
+                pla
+                plp
+                rts
+R_CHRIN:        jsr     SWROM:
+                jsr     CHRIN
+                jmp     SHRAM:
+R_CHROUT:       jsr     SWROM:
+                jsr     CHROUT
+                jmp     SHRAM:
+R_GETIN:        jsr     SWROM:
+                jsr     GETIN
+                jmp     SHRAM:
+R_STOPT:        jsr     SWROM:
+                jsr     STOPT
+                jmp     SHRAM:
+R_CLOSE:        jsr     SWROM:
+                jmp     CLOSE
+R_CLRCHN:       jsr     CLRCHN
+                jmp     SHRAM:
+;LC9A8:          jsr     SWROM:
+;                jsr     EN_TIMER
+;                jmp     SHRAM:
+;LC9BD:          cli
+;                jmp     CHRIN
+
+; -----------------------------------------------------------
+
+R_CONTIN:       bmi     _exit
+                lda     $fb
+                and     #$3f
+                cmp     #$3f
+                bne     _exit
+                inc     $fb
+                bne     _ret
+                inc     $fc
+_ret:           jsr     RETURN
+_exit:          jmp     CONTIN    
+
+     
+} else {
+; --------- TRACE (T) ------- $CBF1 -------------------------
 TRACE:          pla
                 pla
                 jsr     CHRIN
@@ -2139,7 +2415,10 @@ LCE03:          lda     #>LCC95
                 sta     BRK_HI
 LCE08:          rts
 }
-; end ifndef FCOM
+
+}   
+
+
 ; -----------------------------------------------------------
 ; --------- END OF COMMON PLUS/FMON PART --------------------
 ; -----------------------------------------------------------
@@ -2181,17 +2460,33 @@ BITSET:         lda     #$2A                            ; "*"
                 cpx     #$08                            ; 8 Bit
                 bne     L3                              ; further byte push
                 jsr     PCINC                           ; increment counter
+!ifdef RAM {
+                cpy     #$1E
+                lda     $AB
+                bmi     W9                
+} else {
                 bit     ADRCODE                         ; Flag for 1*8 BIT
                 bmi     W9                              ; line finish
                 cpy     #$1E                            ; 3 Bytes
+}                
                 bcc     L2
-W9:             jsr     CONTIN                          ; check key
+W9:
+!ifdef RAM {
+                jsr     R_CONTIN
+} else {
+                jsr     CONTIN                          ; check key
+}
                 bcc     L1
                 rts
 ;
 ZCMDH:          ldy     #$08                            ; 1 Byte
                 !by     $2C
-HCMDH           ldy     #$18                            ; 3 Byte
+HCMDH:
+!ifdef RAM {
+                ldy     #$c8
+} else {
+                ldy     #$18                            ; 3 Byte
+}          
                 jsr     GETADR1
                 jsr     SKIPSPACE                       ; ignore space
 A1:             ldx     #$08
@@ -2229,7 +2524,11 @@ L5:             jsr     RETURN                          ; next line
                 bit     ADRCODE
                 bpl     U
                 lda     #HCN                            ; hidden command
+!ifdef RAM {
+                jsr     R_CHROUT
+} else {
                 jsr     CHROUT
+}               
                 jsr     HEXOUT                          ; output as 4 digit hex
                 ldy     #$08                            ; column 8
                 !by     $2c
@@ -2253,6 +2552,89 @@ C1:             lda     ($D1),y
                 bcc     C1
                 rts                                     ; line finish
 ; --------- KOPIERT SMON (Y) --------------------------------
+
+!ifdef RAM  {
+;CPSMON: rts
+
+; new
+R_SVVEC:        lda      #$36
+                sta      $01
+                lda      $0400
+                sta      MEM
+                lda      #$01
+                ldx      $ba
+                ldy      #$01
+                jsr      SETLFS
+                lda      $b7
+                ldy      $bc
+                ldx      $bb
+                jsr      SETNAM
+                jsr      SETNAM
+                ldx      #$01
+                jsr      CHKOUT
+                lda      $c1
+                jsr      CHROUT
+                lda      $c2
+                jsr      CHROUT
+
+Lcc1f:          sei
+                ldy      #$00
+                sty      $01
+                lda      ($c1),y
+                sta      $0400
+                lda      #$37
+                sta      $01
+                cli
+                lda      $0400
+                jsr      CHROUT
+                inc      $c1
+                lda      $c1
+                cmp      #$00
+                bne      Lcc3e
+                inc      $c2
+
+Lcc3e:          lda      $c1
+                cmp      $ae
+                bne      Lcc1f
+                lda      $c2
+                cmp      $af
+                bne      Lcc1f
+                jsr      CLRCHN
+                lda      #$01
+                jsr      CLOSE
+                lda      $41
+                sta      $01
+                lda      MEM
+                sta      $0400
+                rts
+
+R_LDVEC:        sta      MEM
+                lda      #$36
+                sta      $01
+                lda      LOADVECT
+                sta      Lcc73+1
+                lda      LOADVECT+1
+                sta      Lcc73+2
+                lda      MEM
+Lcc73:          jsr      $f4a5
+                lda      $41
+                sta      $01
+                rts
+
+R_GETSTART:     lda     #$36
+                sta     $01
+                jmp     GETSTART
+
+
+; --------- SET RAM (Y) -------------------------------------
+SWRAM:          jsr     GETBYT
+                sta     $01
+                rts
+                
+
+} else {    ; if ram function is not selected
+
+; --------- KOPIERT SMON (Y) --------------------------------
 CPSMON:         jsr     GETBYT
                 and     #$F0                            ; get high-nibble
                 sta     $FF                             ; store as new 4-k address
@@ -2261,9 +2643,9 @@ CPSMON:         jsr     GETBYT
                 jsr     _write                          ; jump into W-command
 ; --------- V - COMMAND ------------------------
                 jsr     SETPTR                          ; prepare for V-command the start and end main address of new location
-                lda     #<NEWCMDS                       ; low byte
+                lda     #<NEWCMDS                       ; end address low byte
                 sta     $FD
-                lda     #>NEWCMDS                       ; high byte
+                lda     #>NEWCMDS                       ; end address high byte
                 jsr     and_or                          ; separate and ora with new address high-byte   
                 sta     $FE
                 lda     #<BREAK                         ; define start for V-command
@@ -2316,7 +2698,7 @@ cp:             lda     ($fb),y                         ; load high byte from ad
                 rts
 
 ;
-SETPTR:         lda     $FF                             ; contains the hihg byte of the new address
+SETPTR:         lda     $FF                             ; contains the high byte of the new address
                 sta     $A9
                 jsr     GETHI
 GETHI:          pla                                     ; 2 times pla
@@ -2331,6 +2713,7 @@ GETHI:          pla                                     ; 2 times pla
                 sta     $A6                             ; store as end adress low byte
                 sta     $A8                             ; store as new address low byte
 LCF56:          rts
+}
 ; --------- ERASE (E) ---------------------------------------
 ERASE:          jsr     GET2ADR
                 lda     #$00                            ; set defined value
@@ -2358,7 +2741,7 @@ E1:             lda     ($FD),y
                 sta     $01
                 cli
                 rts
-; print last command on screen
+; --------- print last command on screen (J) ----------------
 LINSTORE:       pha                                     ; remember command
                 cmp     #$4A                            ; "J"
                 bne     STORE                           ; check other commands
@@ -2370,7 +2753,7 @@ G1:             lda     $0200,y                         ; get char from buffer
                 pla                                     ; get last command back
                 dec     $D6                             ; Cursor up
                 jmp     EXECUTE                         ; go back, wait for next input
-;
+; --------- check for more PLUS commands --------------------
 STORE:          ldy     #$06                            ; amount of commands
 G3:             cmp     OUTCMDS,y                       ; check for "()!EYQ"
                 bne     W3
@@ -2383,7 +2766,7 @@ W3:             dey
                 bpl     G3
                 pla                                     ; get command back
                 jmp     CMDSTORE                        ; store and compare command
-;
+; --------- execute PLUS COMMANDS ??? ------------------------
 MORECMD:        ldx     #$0A
 B1:             cmp     NEWCMDS-1,x
                 beq     FOUND
@@ -2412,8 +2795,13 @@ NEWADR:         !by     <HCMDH-1
                 !by     >NCMDH-1
                 !by     <ERASE-1
                 !by     >ERASE-1
-                !by     <CPSMON-1;DIR
-                !by     >CPSMON-1;DIR
+!ifdef RAM {
+                !by     <SWRAM-1
+                !by     >SWRAM-1
+} else {
+                !by     <CPSMON-1
+                !by     >CPSMON-1
+}
                 !by     <CPCHR-1
                 !by     >CPCHR-1
                 !by     <HCMD-1
@@ -2425,6 +2813,7 @@ NEWADR:         !by     <HCMDH-1
                 !by     <UCMD-1
                 !by     >UCMD-1
 
+!ifndef RAM {
 OFSTAB:         !by     <_brk_hb+1
                 !by     >_brk_hb+1
                 !by     <REGISTER+1
@@ -2441,6 +2830,7 @@ OFSTAB:         !by     <_brk_hb+1
                 !by     >LCE03+1
                 !by     <BASJMP
                 !by     >BASJMP
+} 
 }
 ; -----------------------------------------------------------
 ; --------- END IFDEF PLUS ----------------------------------
@@ -2753,7 +3143,7 @@ LCE9F:          ldy     #$02
                 sty     $02c5
                 lda     (PCL),y
                 ldx     #$0f
-LCEAC:          cmp     LCE08,x
+LCEAC:          cmp     ILLEGAL,x
                 beq     LCE8A
                 dex
                 bne     LCEAC
@@ -2790,11 +3180,19 @@ ICEEB:          ldx     $02c5
                 jsr     SPACE                           ; output space
                 jmp     LC5C9
 LCEF6:          lda     #$2a
+!ifndef RAM {
                 jsr     CHROUT
                 lda     LCE18-1,x
                 jsr     CHROUT
                 lda     LCE22-1,x
                 jsr     CHROUT
+} else {
+                jsr     R_CHROUT
+                lda     LCE18-1,x
+                jsr     R_CHROUT
+                lda     LCE22-1,x
+                jsr     R_CHROUT
+}                
                 lda     LCE2C-1,x
                 jmp     LC616
 

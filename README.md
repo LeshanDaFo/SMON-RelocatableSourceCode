@@ -1,3 +1,8 @@
+# Update 2022.09.03
+I add a new function to the source code, with this function it is possible to show the RAM under the ROM
+in the area from $A000 to $FFFF
+
+
 ## SMON relocatable source code
 #### With the help of this source code you can build your own personal SMON-version  
 - The created versions can be used in different address area of the C64-memory.  
