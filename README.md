@@ -2,6 +2,17 @@
 I add a new function to the source code, with this function it is possible to show the RAM under the ROM
 in the area from $A000 to $FFFF
 
+To compile it use uncomment the RAM or RAM1 in the source code. 
+
+RAM is the PLUS version with the extended function. 
+RAM1 is the ILOC version with the extended function. 
+
+The Trace commands are not implemented now, and therefor removed. 
+The B-command to show generate basic data lines is removed. 
+
+To change the address $01 you can use the B-command 
+For example:  B37 switch to normal status, B34 switch to RAM
+
 
 ## SMON relocatable source code
 #### With the help of this source code you can build your own personal SMON-version  
