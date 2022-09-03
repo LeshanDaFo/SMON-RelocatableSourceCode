@@ -1,20 +1,17 @@
-# Update 2022.09.03
-I add a new function to the source code, with this function it is possible to show the RAM under the ROM
+## Update 2022.09.03
+I have added a new function to the source code,  
+with this function it is possible to show the RAM under the ROM
 in the area from $A000 to $FFFF
 
-To compile it use uncomment the RAM or RAM1 in the source code. 
-
-RAM is the PLUS version with the extended function. 
- 
-RAM1 is the ILOC version with the extended function. 
-
-The Trace commands are not implemented now, and therefor removed. 
-The Y-command to move SMON is removed. 
-
-To change the address $01 you can use the Y-command 
+To compile it you should uncomment the RAM or RAM1 in the source code. 
+- RAM is the PLUS version with the extended function.  
+- RAM1 is the ILOC version with the extended function.
+  
+The Trace commands are not implemented now, and therefore removed.  
+The Y-command to move SMON is removed.  
+To change the address $01 you can use the Y-command  
 For example:  Y37 switch to normal status, Y34 switch to RAM
-
-
+ 
 ## SMON relocatable source code
 #### With the help of this source code you can build your own personal SMON-version  
 - The created versions can be used in different address area of the C64-memory.  
