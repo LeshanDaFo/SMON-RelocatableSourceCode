@@ -1,7 +1,7 @@
 ; ###############################################################
 ; #                                                             #
 ; #  SMON RELOCATABLE SOURCE CODE                               #       
-; #  Version 1.1.1.004 (2022.09.03)                             #
+; #  Version 1.1.2.004 (2022.09.04)                             #
 ; #  Copyright (c) 2022 Claus Schlereth                         #
 ; #                                                             #  
 ; #  Based on the source code from: cbmuser                     #
@@ -31,7 +31,7 @@
 ; V1.0.0.003    =   re arrange some lables , add more comments
 ; V1.1.0.003    =   start to add show ram under rom function, not released
 ; V1.1.1.004    =   add the show ram under rom function, add more comments, re arrange code
-; 
+; V1.1.2.004    =   error correction in "comma" function in RAM version
 
 TASTBUF         = $0277
 COLOR           = $0286                         ; charcolor
@@ -1219,7 +1219,7 @@ LC701:          stx     FLAG
                 ldx     #$0A
 LC711:
 !ifdef RAM {
-                jsr     R_CHRIN
+                jmp     LC717
 } else {
                 jsr     CHRIN
 }

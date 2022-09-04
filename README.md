@@ -1,4 +1,7 @@
-## Update 2022.09.03
+### Update 2022.09.04 (V1.1.2.004)
+One error was corrected in the RAM version in the "comma" function
+
+### Update 2022.09.03 (V1.1.1.004)
 I have added a new function to the source code,  
 with this function it is possible to show the RAM under the ROM
 in the area from $A000 to $FFFF
