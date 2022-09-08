@@ -1,3 +1,6 @@
+### Update 2022.09.08 (V1.1.3.004)
+One error was corrected in the RAM version in the SAVE function
+
 ### Update 2022.09.04 (V1.1.2.004)
 One error was corrected in the RAM version in the "comma" function
 
