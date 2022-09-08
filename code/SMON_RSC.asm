@@ -1,7 +1,7 @@
 ; ###############################################################
 ; #                                                             #
 ; #  SMON RELOCATABLE SOURCE CODE                               #       
-; #  Version 1.1.2.004 (2022.09.04)                             #
+; #  Version 1.1.3.004 (2022.09.08)                             #
 ; #  Copyright (c) 2022 Claus Schlereth                         #
 ; #                                                             #  
 ; #  Based on the source code from: cbmuser                     #
@@ -32,6 +32,7 @@
 ; V1.1.0.003    =   start to add show ram under rom function, not released
 ; V1.1.1.004    =   add the show ram under rom function, add more comments, re arrange code
 ; V1.1.2.004    =   error correction in "comma" function in RAM version
+; V1.1.3.004    =   error correction in the SAVE command in the RAM version
 
 TASTBUF         = $0277
 COLOR           = $0286                         ; charcolor
@@ -138,7 +139,7 @@ PLUS = 1       ; this is the PLUS version, also named SMONPx000, for the new fun
 
 ; -----------------------------------------------------------
 ; --------- define here the start address in memory ---------
-        *= $C000
+        *= $8000
 ; -----------------------------------------------------------
 
 
@@ -2569,7 +2570,7 @@ R_SVVEC:        lda      #$36
                 ldy      $bc
                 ldx      $bb
                 jsr      SETNAM
-                jsr      SETNAM
+                jsr      OPEN
                 ldx      #$01
                 jsr      CHKOUT
                 lda      $c1
