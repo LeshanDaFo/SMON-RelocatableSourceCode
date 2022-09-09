@@ -1,7 +1,7 @@
 ; ###############################################################
 ; #                                                             #
 ; #  SMON RELOCATABLE SOURCE CODE                               #       
-; #  Version 1.1.3.004 (2022.09.08)                             #
+; #  Version 1.1.3.005 (2022.09.09)                             #
 ; #  Copyright (c) 2022 Claus Schlereth                         #
 ; #                                                             #  
 ; #  Based on the source code from: cbmuser                     #
@@ -33,6 +33,7 @@
 ; V1.1.1.004    =   add the show ram under rom function, add more comments, re arrange code
 ; V1.1.2.004    =   error correction in "comma" function in RAM version
 ; V1.1.3.004    =   error correction in the SAVE command in the RAM version
+; V1.1.3.005    =   add a switch to hide the bounding line after 'brk','rts' and 'jmp', add some comments, re arrange the code
 
 TASTBUF         = $0277
 COLOR           = $0286                         ; charcolor
@@ -139,9 +140,27 @@ PLUS = 1       ; this is the PLUS version, also named SMONPx000, for the new fun
 
 ; -----------------------------------------------------------
 ; --------- define here the start address in memory ---------
-        *= $8000
+        *= $C000
 ; -----------------------------------------------------------
 
+; -----------------------------------------------------------
+; ----------------------- CIA VERSION -----------------------
+; -----------------------------------------------------------
+; the new CIA is defined as standard
+; commenting CIA_N will activate the old version
+; changing the CIA timing is necessary if the trace-command is not working well
+; it can also defined manually at address $CD8E
+ CIA_N = 1     ; change here
+; -----------------------------------------------------------
+
+; -----------------------------------------------------------
+; feature to hide the bounding line after 'brk','rts' and 'jmp'
+; -----------------------------------------------------------
+; with the next switch it is possible to hide the bounding lines
+; after some commands during disassemble
+; commenting bndline will hide the lines
+bndline = 1     ; change here
+; -----------------------------------------------------------
 
 !ifdef RAM1 {
     PLUS = 1
@@ -172,15 +191,6 @@ PLUS = 1       ; this is the PLUS version, also named SMONPx000, for the new fun
         }
     }
 }
-; -----------------------------------------------------------
-; ----------------------- CIA VERSION -----------------------
-; -----------------------------------------------------------
-; the new CIA is defined as standard
-; commenting CIA_N will activate the old version
-; changing the CIA timing is necessary if the trace-command is not working well
-; it can also defined manually at address $CD8E
- CIA_N = 1     ; change here
-; -----------------------------------------------------------
 
 
 ; -----------------------------------------------------------
@@ -956,22 +966,22 @@ LC564:          jsr     LC58C
                 bne     LC586
                 nop
 LC576:          jsr     PRINTER1
+; here the bounding line after 'brk,'rts' and 'jmo' will be printed
+!ifdef brdline {
                 jsr     RETURN                          ; next line
-!ifdef RAM {
-                ldx     #$13
-} else {
-                ldx     #$21
-}
-                lda     #$2D
+                ldx     #$21                            ; amount of bounding line chars
+                lda     #$2D                            ; load with '-'
 LC580:
 !ifdef RAM {
-                jsr     R_CHROUT
+                jsr     R_CHROUT                        ; print char
 } else {
-                jsr     CHROUT
+                jsr     CHROUT                          ; print char
 }
-                dex
-                bne     LC580
-LC586:          jsr     CONTIN
+                dex                                     ; dec amount
+                bne     LC580                           ; not last
+} 
+; emd printing bounding line              
+LC586:          jsr     CONTIN                          
                 bcc     LC564
                 rts
 LC58C:          ldx     #$2C
