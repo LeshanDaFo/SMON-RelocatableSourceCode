@@ -1,7 +1,7 @@
 ; ###############################################################
 ; #                                                             #
 ; #  SMON RELOCATABLE SOURCE CODE                               #       
-; #  Version 1.1.3.005 (2022.09.09)                             #
+; #  Version 1.1.3.006 (2022.09.10)                             #
 ; #  Copyright (c) 2022 Claus Schlereth                         #
 ; #                                                             #  
 ; #  Based on the source code from: cbmuser                     #
@@ -34,6 +34,7 @@
 ; V1.1.2.004    =   error correction in "comma" function in RAM version
 ; V1.1.3.004    =   error correction in the SAVE command in the RAM version
 ; V1.1.3.005    =   add a switch to hide the bounding line after 'brk','rts' and 'jmp', add some comments, re arrange the code
+; V1.1.3.006    =   change a missspelled label from brdline to bndline 
 
 TASTBUF         = $0277
 COLOR           = $0286                         ; charcolor
