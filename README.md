@@ -1,11 +1,4 @@
-### Update 2022.09.09 (V1.1.3.005)
-add a switch to hide the bounding line after 'brk','rts' and 'jmp', add some comments, re arrange the code
-
-### Update 2022.09.08 (V1.1.3.004)
-One error was corrected in the RAM version in the SAVE function
-
-### Update 2022.09.04 (V1.1.2.004)
-One error was corrected in the RAM version in the "comma" function
+More update information and changlogs are in History.text
 
 ### Update 2022.09.03 (V1.1.1.004)
 I have added a new function to the source code,  
