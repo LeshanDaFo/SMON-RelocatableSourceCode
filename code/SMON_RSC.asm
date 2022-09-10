@@ -967,7 +967,7 @@ LC564:          jsr     LC58C
                 nop
 LC576:          jsr     PRINTER1
 ; here the bounding line after 'brk,'rts' and 'jmo' will be printed
-!ifdef brdline {
+!ifdef bndline {
                 jsr     RETURN                          ; next line
                 ldx     #$21                            ; amount of bounding line chars
                 lda     #$2D                            ; load with '-'
