@@ -14,7 +14,7 @@ Additional disc-cammands are added to both RAM version:
 - P"cmd" sends a floppy command
 
 The idea for this additional commands are based on a SMON-version provided to me by rh70,
-which is also a member from FORUM64                                        #
+which is also a member from FORUM64.
 https://www.forum64.de/wcf/index.php?user/20464-rh70/  
 
 ### Update 2022.09.03 (V1.1.1.004)
