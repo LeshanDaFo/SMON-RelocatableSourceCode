@@ -1,8 +1,8 @@
 More update information and changlogs are in History.text
 
-### Update 2023.01.014 (V1.1.4.007)
+### Update 2023.01.14 (V1.1.4.007)
 In the RAM under ROM function was a problem, it was not possible any more, to save the ROM content from $A000 to $FFFF.
-With the new version, this is corrected.
+With the new updated, this is corrected.
 
 The SMON-RAM-PLUS-version now get back the "Y" command to move the SMON to different memory location. 
 
