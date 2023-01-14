@@ -1,8 +1,8 @@
 ; ###############################################################
 ; #                                                             #
 ; #  SMON RELOCATABLE SOURCE CODE                               #       
-; #  Version 1.1.3.006 (2022.09.10)                             #
-; #  Copyright (c) 2022 Claus Schlereth                         #
+; #  Version 1.1.4.007 (2023.01.14)                             #
+; #  Copyright (c) 2022, 2023 Claus Schlereth                   #
 ; #                                                             #  
 ; #  Based on the source code from: cbmuser                     #
 ; #  https://github.com/cbmuser/smon-reassembly                 #
@@ -21,6 +21,11 @@
 ; #  provided to me by schumi, a member from FORUM64            #
 ; #  https://www.forum64.de/wcf/index.php?user/15606-schumi/    #
 ; #                                                             #
+; #  additional function for floppy commands in Ram-under-Rom   #
+; #  based on a SMON-version provided to me by rh70, also a     #
+; #  member from FORUM64                                        #
+; #  https://www.forum64.de/wcf/index.php?user/20464-rh70/      #
+; #                                                             #
 ; #  This version of the source code is under MIT License       #
 ; ###############################################################
 
@@ -35,6 +40,7 @@
 ; V1.1.3.004    =   error correction in the SAVE command in the RAM version
 ; V1.1.3.005    =   add a switch to hide the bounding line after 'brk','rts' and 'jmp', add some comments, re arrange the code
 ; V1.1.3.006    =   change a missspelled label from brdline to bndline 
+; V1.1.4.007    =   work on ram under rom function ;error correction, rearange code and commands, add floppy commands, add more comments
 
 TASTBUF         = $0277
 COLOR           = $0286                         ; charcolor
@@ -70,11 +76,15 @@ TIMERA_LO       = $DC04                         ; Timer A Low-Byte (Kernal-IRQ, 
 TIMERA_HI       = $DC05                         ; Timer A High-Byte (Kernal-IRQ, Tape)
 CONTROL_REGA    = $DC0E                         ; Control Register A CIA#1
 EN_TIMER        = $FDDD                         ; Enable Timer
+SECND           = $FF93                         ; send SA after LISTEN
 TKSA            = $FF96                         ; Set secondary address
 IECIN           = $FFA5                         ; Read byte from IEC bus
-UNTALK          = $FFAB
-TALK            = $FFB4
-SETLFS          = $FFBA
+CIOUT           = $FFA8                         ; handshake IEEE byte out
+UNTALK          = $FFAB                         ; send UNTALK out IEEE
+UNLSN           = $FFAE                         ; send UNLISTEN out IEEE
+LISTN           = $FFB1                         ; send LISTEN out IEEE
+TALK            = $FFB4                         ; send TALK out IEEE
+SETLFS          = $FFBA                         ; set length and FN adr
 SETNAM          = $FFBD                         ; Set file name
 OPEN            = $FFC0                         ; OPEN Vector
 CLOSE           = $FFC3                         ; CLOSE Vector
@@ -100,6 +110,7 @@ BUF3            = $039C
 BUF4            = $03CC
 
 ; used zero page addresses
+_01BUFF         = $41                           ; Buffer for $01 zero page value used in ram under rom version
 FLAG            = $AA                           ; Universal flag
 ADRCODE         = $AB                           ; Addressing code for Assembler/Disassembler
 COMMAND         = $AC                           ; SMON-command code
@@ -122,19 +133,19 @@ HCN             = $21                           ; "!"
 
 ; -----------------------------------------------------------
 ; ---------------------- SMON VERSION -----------------------
-; ----------------------------------------------------------- 
+; -----------------------------------------------------------
 ; - SELECT ONLY ONE VERSION BY UNCOMMENTING IT -
 ; if nothing is selected here, SMON will be compiled without any extension
 
 ;FMON = 1       ; this is the FMON version, also named SMONFx000, this seems to be the 'normal' or initial one, including the base disc commands
-PLUS = 1       ; this is the PLUS version, also named SMONPx000, for the new function the FMON monitor is removed
+;PLUS = 1       ; this is the PLUS version, also named SMONPx000, for the new function the FMON monitor is removed
 ;ILOC = 1       ; this is the ILOC version, also named SMONIx000, this provides the function to show the illegal opcodes, the FMON is removed 
 
 ;FCOM = 1       ; this is the FCOM version, can named as SMONDx000, this has the extended Floppy cpmmands, the "Trace" function is removed
 
-; new extensions
-;RAM = 1        ; this is the PLUS version with activated ram under rom function, the "Trace" functions are removed
-;RAM1 = 1       ; this is the ILOC version including the functions of the RAM version
+; new extensions, the "Trace" functions and "Y" command are replaced by additional disc commands
+;RAM = 1        ; this is the PLUS version with activated ram under rom function
+RAM1 = 1       ; this is the ILOC version with activated ram under rom function
 ; -----------------------------------------------------------
 ; -------------------END SMON VERSION -----------------------
 ; -----------------------------------------------------------
@@ -157,8 +168,8 @@ PLUS = 1       ; this is the PLUS version, also named SMONPx000, for the new fun
 ; -----------------------------------------------------------
 ; feature to hide the bounding line after 'brk','rts' and 'jmp'
 ; -----------------------------------------------------------
-; with the next switch it is possible to hide the bounding lines
-; after some commands during disassemble
+; with this switch it is possible to hide the bounding lines
+; which is normally displayed after some commands during disassemble
 ; commenting bndline will hide the lines
 bndline = 1     ; change here
 ; -----------------------------------------------------------
@@ -167,11 +178,11 @@ bndline = 1     ; change here
     PLUS = 1
     RAM = 1
     ILOC = 1
-    !to"build/SMON-IR.prg",cbm
+    !to"build/SMONRIx000.prg",cbm
 } else {
     !ifdef RAM {
         PLUS = 1
-        !to"build/SMONRx000.prg",cbm
+        !to"build/SMONRPx000.prg",cbm
     } else {
         !ifdef FMON {
             !to"build/SMONFx000.prg",cbm
@@ -192,7 +203,6 @@ bndline = 1     ; change here
         }
     }
 }
-
 
 ; -----------------------------------------------------------
 ; ------ THIS IS FOR COMPILING THE VERSIONS CORRECTLY -------
@@ -219,9 +229,10 @@ CMDTBL:         !by     $27,$23,$24,$25,$2C,$3A,$3B,$3D ;"'#$%,:;="
 !ifdef FCOM {
                 !by     $00                             ; deactivate the trace command if FCOM is selected
 } else {
+; remove the trace command if RAM is selected
 !ifndef RAM {
-                !by     $54                             ; "T"    
-}        
+                !by     $54                             ; "T"
+}                        
 }
                 !by     $56,$57,$58                     ; "VWX"
 
@@ -273,21 +284,28 @@ CMDS:           !by     <TICK-1                         ; ' 01
                 !by     >MEMDUMP-1
                 !by     <OCCUPY-1                       ; O 15
                 !by     >OCCUPY-1
+; depending on the selected version, different command addresses are defined
+!ifdef RAM {
+; the DCOM command is used in ram under rom version
+                !by     <DCOM-1                         ; P 16
+                !by     >DCOM-1
+} else {
                 !by     <SETPRINTER-1                   ; P 16
-                !by     >SETPRINTER-1
+                !by     >SETPRINTER-1    
+}   
                 !by     <REGISTER-1                     ; R 17
                 !by     >REGISTER-1
                 !by     <LOADSAVE-1                     ; S 18
                 !by     >LOADSAVE-1
-; depending on the selected version, different command addresses are defined
 !ifdef FCOM {                                           ; trace command removed
                 !by     $00                             ; . 19
                 !by     $00
-} else {                                                ; the trace command is used in PLUS and FMON version
+} else {
 !ifndef RAM {
+; the trace command is used in PLUS and FMON version            
                 !by     <TRACE-1                        ; T 19                        
-                !by     >TRACE-1
-}        
+                !by     >TRACE-1   
+}
 }
                 !by     <VERSCHIEB-1                    ; V 1A
                 !by     >VERSCHIEB-1
@@ -310,7 +328,7 @@ HCMDTAB:        !by     HCK,HCM,HCR,HCD,HCH,HCZ,HCN     ; "':;,()!"
                 !by     >DMON-1
                 !by     $00,$00
 }
-!ifdef ILOC {
+!ifdef ILOC {                                           ; activate the Illegal opcodes
                 !by     <ILLEGAL-1
                 !by     >ILLEGAL-1
                 !by     $00,$00        
@@ -327,8 +345,8 @@ OFFSET:         !by     $FF,$FF,$01,$00
 FINDTAB:        !by     $41,$5A,$49,$52,$54             ; "AZIRT"
 FINDFLG:        !by     $80,$20,$40,$10,$00
 FINDFLG1:       !by     $02,$01,$01,$02,$00
-; for generating basic lines
 
+; code for generating basic lines
 SYS172:         !by     $91,$91,$0D
                 !by     $53,$D9,$31,$37,$32,$0D         ; "sY172." 
 DATATAB:        !by     $00,$7D                         ; basic line number 32000
@@ -408,12 +426,8 @@ BREAK:          cld
                 lda     #$08
                 sta     IONO                            ; set drive #8
                 lda     #$04
-                sta     PRNNO                           ; set printer #4  
-!ifdef RAM {
-                lda     #$34
-                sta     $01
-                sta     $41 
-} else {
+                sta     PRNNO                           ; set printer #4   
+!ifndef RAM {
                 lda     #$06
                 sta     BORDER                          ; border and  
                 sta     BKGRND                          ; screen color  
@@ -471,7 +485,7 @@ GETADR:         jsr     GETBYT
                 rts
 ;
 GETBYT:         jsr     GETCHRERR
-                cmp     #$20
+_GETBYT:        cmp     #$20
                 beq     GETBYT
                 cmp     #$2C
                 beq     GETBYT
@@ -671,7 +685,7 @@ EXIT:
 !ifdef RAM {
                 lda     #$37 
                 sta     $01
-                sta     $41
+                sta     _01BUFF
 } else {
                 lda     #$0E                            ; restore 
                 sta     COLOR                           ; system   
@@ -763,7 +777,11 @@ MEMDUMP2:       jsr     SPACE                           ; output space
                 lda     (PCL,x)
                 jsr     ASCII
                 bne     MEMDUMP2
+!ifdef RAM {
+                jsr     R_CONTIN
+} else {
                 jsr     CONTIN
+}               
                 bcc     MEMDUMP1
                 rts
 ; --------- COLON (:) ---------------------------------------
@@ -864,13 +882,11 @@ PRLOOP:         jsr     CHRIN
                 bne     PRLOOP
 !ifdef RAM {
                 jsr     R_CLRCHN
-} else {
-                jsr     CLRCHN
-}
                 lda     #$91
-!ifdef RAM {
                 jsr     R_CHROUT
 } else {
+                jsr     CLRCHN
+                lda     #$91
                 jmp     CHROUT
 }
 LC4CB:          ldy     #$00
@@ -957,17 +973,17 @@ LC55C:          rts
 DISASS:         ldx     #$00
                 stx     FLAG
                 jsr     GET12ADR
-LC564:          jsr     LC58C
-                lda     BEFCODE
-                cmp     #$16
-                beq     LC576
-                cmp     #$30
-                beq     LC576
-                cmp     #$21
+LC564:          jsr     LC58C                           ; output one line
+                lda     BEFCODE                         ; load command code
+                cmp     #$16                            ; compare with "JMP"
+                beq     LC576                           ; print one line with "-"
+                cmp     #$30                            ; compare with "RTS"
+                beq     LC576                           ; print one line with "-"
+                cmp     #$21                            ; compare with "BRK"
                 bne     LC586
                 nop
 LC576:          jsr     PRINTER1
-; here the bounding line after 'brk,'rts' and 'jmo' will be printed
+; here the bounding line after 'JMP','RTS' and 'BRK' will be printed
 !ifdef bndline {
                 jsr     RETURN                          ; next line
                 ldx     #$21                            ; amount of bounding line chars
@@ -982,7 +998,8 @@ LC580:
                 bne     LC580                           ; not last
 } 
 ; emd printing bounding line              
-LC586:          jsr     CONTIN                          
+LC586:
+                jsr     CONTIN
                 bcc     LC564
                 rts
 LC58C:          ldx     #$2C
@@ -1017,7 +1034,7 @@ LC5B5:          jsr     SPACE2                          ; output 2 x space
                 bne     LC5B5
 
 SPCOC:  ; output opcode with leading space
-; if selected ILOC
+; if select ILOC
 !ifdef ILOC {
                 jmp     _ILOCD
                 !by     $D2
@@ -1069,21 +1086,16 @@ LC5DA:          bit     FLAG
 LC607:          lda     LC15C-1,x
 !ifdef RAM {
                 jsr     R_CHROUT
-} else {
-                jsr     CHROUT
-}
                 lda     LC194-1,x
-!ifdef RAM {
                 jsr     R_CHROUT
-} else {
-                jsr     CHROUT
-}
                 lda     LC1CC-1,x
-LC616:
-!ifdef RAM {
-                jsr     R_CHROUT
+LC616:          jsr     R_CHROUT
 } else {
                 jsr     CHROUT
+                lda     LC194-1,x
+                jsr     CHROUT
+                lda     LC1CC-1,x
+LC616:          jsr     CHROUT
 }
                 lda     #$20
                 bit     ADRCODE
@@ -1356,11 +1368,7 @@ LC7E9:          sty     ADRCODE
                 lda     #$18
                 !by     $2C
 LC810:
-!ifdef RAM {
-                lda     #$CC
-} else {
                 lda     #$1C
-}
                 ldx     #$82
                 jsr     LC681
                 ldy     #$08
@@ -1382,9 +1390,11 @@ LC831:          jsr     LC68A
                 sta     $D3
                 jmp     LC597
 ; --------- SETPRINTER (P) ----------------------------------
+!ifndef RAM1 {
 SETPRINTER:     jsr     GETBYT
                 sta     PRNNO
                 rts
+}
 ; --------- IO SET (I) --------------------------------------
 IOSET:          jsr     GETBYT
                 sta     IONO
@@ -2048,7 +2058,7 @@ LCD69:          jsr     CLRCHN
 LCD77:          lda     #$0f
                 tay
                 ldx     #$08
-                jsr     SETLFS
+                jsr     SETLFS                          ; set length and FN adr
                 lda     #$00
                 jsr     SETNAM
                 jmp     OPEN
@@ -2059,15 +2069,15 @@ LCD87:          jsr     GETIN
 ERRCH:          jsr     GETRET                          ; check for return
                 bne     LCD95
                 jmp     DCF86
-LCD95:          lda     #$08
-                jsr     $ffb1
-                lda     #$6f
-                jsr     $ff93
-LCD9F:          jsr     CHRIN
-                jsr     $ffa8
-                cmp     #$0d
-                bne     LCD9F
-                jsr     $ffae
+LCD95:          lda     #$08                            ; device no.
+                jsr     LISTN                           ; listen
+                lda     #$6f                            ; secondary address
+                jsr     SECND                           ; send SA after LISTEN
+LCD9F:          jsr     CHRIN                           ; get cmd char
+                jsr     CIOUT                           ; handshake IEEE byte out
+                cmp     #$0d                            ; cmp with return
+                bne     LCD9F                           ; branch if not
+                jsr     UNLSN                           ; send UNLISTEN out IEEE
                 jmp     PRNRET                          ; print return
 ; --------- f-EXIT (X) --------------------------------------
 FEXIT:          jmp     DMON
@@ -2114,28 +2124,134 @@ FADDTBL:        !by     <H_COL-1
 !ifndef FCOM {
 
 !ifdef RAM {
-
-
 ; --------- NEW CODE FOR RAM/ROM ----------------------------
+; --------------- (T) DCOM -- $CBF1 -------------------------
+DCOM:
+; check for disc command and execute
+RCD32:          jsr     GETCHRERR                       ; get input
+                cmp     #$20                            ; space
+                beq     RCD32                           ; go get input
+                cmp     #$22                            ; ' " '
+                beq     RCD44                           ; execute disc command
+RCD3D:          cmp     #$24                            ; "$"
+                beq     RCD6D                           ; show directory
+                cmp     #$40                            ; "@"
+                beq     RCD12    
 
+; else change memory location $01
+                jsr     _GETBYT
+                pha                                     ; save input
+                jsr     SPACE2                          ; output 2 x space
+                lda     $01                             ; load actual value from 01
+                jsr     HEXOUT1                         ; output value as 2 digit hex
+                pla                                     ; get input back
+                sta     $01                             ; store in 01
+                rts
+
+; Disc status   ; P@
+RCD12:          jsr     SWROM                           ; switch to ROM
+                lda     #$0d                            ; return code
+                jsr     CHROUT                          ; output
+RCD18:          lda     IONO                            ; device no.
+                sta     $BA
+                jsr     TALK           
+                lda     #$6f
+                jsr     TKSA                            ; set secondary addres
+RCD22:          jsr     IECIN
+                jsr     CHROUT
+                cmp     #$0d
+                bne     RCD22
+                jsr     UNTALK
+                jsr     SHRAM                           ; switch 01 back
+                rts
+
+; Disc command  ; P"cmd"
+RCD44:          jsr     SWROM                           ; switch on rom
+                lda     $ba                             ; device no.
+                jsr     LISTN                           ; LISTEN
+                lda     #$6f                            ; secondary address
+                jsr     SECND                           ; send to IEEE
+                ldy     #$3a                            ; max bytes
+RCD55:          jsr     CHRIN                           ; get next char from input
+RCD58:          cmp     #$22                            ; ' " '
+                beq     RCD62                           ; if yes branch end
+                jsr     CIOUT                           ; else send byte out
+                dey                                     ;
+                bne     RCD55                           ; next char
+RCD62:          jsr     UNLSN                           ; else send unlisten
+                lda     #$0d                            ; return code
+                jsr     CHROUT                          ; output
+                jmp     RCD18                           ; close device
+
+; show directory    ; P$
+RCD6D:          jsr     SWROM                           ; switch on ROM
+                lda     #$01                            ; file length
+                ldx     #<RCD3D+1                       ; #$24 "$"
+RCC4F:          ldy     #>RCD3D+1                       ; file name
+                jsr     SETNAM
+                ldx     IONO                            ; device no.
+                ldy     #$00
+                jsr     SETLFS                          ; set length and FN adr
+                jsr     OPEN                            ; open
+                bcc     RCD8C                           ; branch if ok
+                jmp     RCDD4                           ; else close and end
+
+RCD8C:          lda     $ba                             ; load device no.
+                jsr     TALK                            ; send to IEEE
+                lda     #$60                            ; load SA
+                jsr     TKSA                            ; set secondary address
+                jsr     IECIN
+                jsr     IECIN
+                lda     #$0d
+                jsr     CHROUT
+                jsr     IECIN
+RCDA4:          jsr     IECIN
+RCDA7:          jsr     IECIN
+                tax
+                jsr     IECIN
+                jsr     INTOUT
+                lda     #$20
+                jsr     CHROUT
+RCDB6:          jsr     STOPT
+                beq     RCDD4
+                jsr     IECIN
+                beq     RCDC5
+                jsr     CHROUT
+                bne     RCDB6
+RCDC5:          lda     #$0d
+                jsr     CHROUT
+                jsr     IECIN
+                bne     RCDA4
+                jsr     IECIN
+                bne     RCDA7
+RCDD4:          jsr     UNTALK
+                lda     #$01
+                jsr     CLOSE
+                jsr     SHRAM
+                rts
+; --------- END DISC COMMANDS -------------------------------
+
+; --------- switch on ROM -----------------------------------
 SWROM:          php
                 pha
                 lda     $01
-                sta     $41
+                sta     _01BUFF
                 lda     #$37
                 sta     $01
                 pla
                 plp
                 cli
                 rts
+; --------- switch on RAM -----------------------------------
 SHRAM:          sei
                 php
                 pha
-                lda     $41
+                lda     _01BUFF
                 sta     $01
                 pla
                 plp
                 rts
+; -----------------------------------------------------------
 R_CHRIN:        jsr     SWROM:
                 jsr     CHRIN
                 jmp     SHRAM:
@@ -2152,14 +2268,7 @@ R_CLOSE:        jsr     SWROM:
                 jmp     CLOSE
 R_CLRCHN:       jsr     CLRCHN
                 jmp     SHRAM:
-;LC9A8:          jsr     SWROM:
-;                jsr     EN_TIMER
-;                jmp     SHRAM:
-;LC9BD:          cli
-;                jmp     CHRIN
-
 ; -----------------------------------------------------------
-
 R_CONTIN:       bmi     _exit
                 lda     $fb
                 and     #$3f
@@ -2171,7 +2280,6 @@ R_CONTIN:       bmi     _exit
 _ret:           jsr     RETURN
 _exit:          jmp     CONTIN    
 
-     
 } else {
 ; --------- TRACE (T) ------- $CBF1 -------------------------
 TRACE:          pla
@@ -2427,9 +2535,7 @@ LCE03:          lda     #>LCC95
                 sta     BRK_HI
 LCE08:          rts
 }
-
 }   
-
 
 ; -----------------------------------------------------------
 ; --------- END OF COMMON PLUS/FMON PART --------------------
@@ -2494,11 +2600,7 @@ W9:
 ZCMDH:          ldy     #$08                            ; 1 Byte
                 !by     $2C
 HCMDH:
-!ifdef RAM {
-                ldy     #$c8
-} else {
-                ldy     #$18                            ; 3 Byte
-}          
+                ldy     #$18                            ; 3 Byte          
                 jsr     GETADR1
                 jsr     SKIPSPACE                       ; ignore space
 A1:             ldx     #$08
@@ -2549,7 +2651,11 @@ U:              ldy     #$00
 L4:             lda     (PCL,x)
                 jsr     ASCII4                          ; as screen code
                 bne     L4                              ; print
+!ifdef RAM  {
+                jsr     R_CONTIN
+} else {
                 jsr     CONTIN
+}               
                 bcc     L5                              ; next line
                 rts
 ;
@@ -2563,12 +2669,9 @@ C1:             lda     ($D1),y
                 jsr     ASCII5                          ; increment PC
                 bcc     C1
                 rts                                     ; line finish
-; --------- KOPIERT SMON (Y) --------------------------------
 
 !ifdef RAM  {
-;CPSMON: rts
-
-; new
+; --------- new code for Save and Load ----------------------
 R_SVVEC:        lda      #$36
                 sta      $01
                 lda      $0400
@@ -2590,8 +2693,9 @@ R_SVVEC:        lda      #$36
                 jsr      CHROUT
 
 Lcc1f:          sei
+                lda      _01BUFF
+                sta      $01
                 ldy      #$00
-                sty      $01
                 lda      ($c1),y
                 sta      $0400
                 lda      #$37
@@ -2614,7 +2718,7 @@ Lcc3e:          lda      $c1
                 jsr      CLRCHN
                 lda      #$01
                 jsr      CLOSE
-                lda      $41
+                lda      _01BUFF
                 sta      $01
                 lda      MEM
                 sta      $0400
@@ -2629,7 +2733,7 @@ R_LDVEC:        sta      MEM
                 sta      Lcc73+2
                 lda      MEM
 Lcc73:          jsr      $f4a5
-                lda      $41
+                lda      _01BUFF
                 sta      $01
                 rts
 
@@ -2637,15 +2741,9 @@ R_GETSTART:     lda     #$36
                 sta     $01
                 jmp     GETSTART
 
-
-; --------- SET RAM (Y) -------------------------------------
-SWRAM:          jsr     GETBYT
-                sta     $01
-                rts
-                
-
-} else {    ; if ram function is not selected
-
+; --------- end new code for Save and Load ------------------
+}
+!ifndef RAM1 {
 ; --------- KOPIERT SMON (Y) --------------------------------
 CPSMON:         jsr     GETBYT
                 and     #$F0                            ; get high-nibble
@@ -2670,7 +2768,10 @@ CPSMON:         jsr     GETBYT
                 sta     $FB
                 lda     #>CMDS                          ; high byte
                 jsr     and_or                          ; separate and ora with new address high-byte
+!ifdef RAM {    ldy     #$33
+} else {        
                 ldy     #$35                            ; amount of changes * 2
+}
 D3:             jsr     cp                              ; load, change and store the bytes for the new addresses
                 dey                                     ; decrease counter
                 dey                                     ; decrease counter
@@ -2680,14 +2781,21 @@ D3:             jsr     cp                              ; load, change and store
                 sta     $FB
                 lda     #>NEWADR                        ; high byte
                 jsr     and_or                          ; separate and ora with new address high-byte
+!ifdef RAM {
+                ldy     #$15
+} else {
                 ldy     #$23                            ; amount of changes
+}
 D2:             jsr     cp                              ; load, change and store the bytes for the new addresses
                 dey                                     ; decrease counter
                 dey                                     ; decrease counter
                 bpl     D2
 ; --------- adjust other addresses -------------
                 ldy     #$00
+!ifdef RAM {    ldx     #$07
+} else {
                 ldx     #$0F
+}
 D1:             lda     OFSTAB,x
                 jsr     and_or                          ; separate and ora with new address high-byte
                 dex
@@ -2807,12 +2915,14 @@ NEWADR:         !by     <HCMDH-1
                 !by     >NCMDH-1
                 !by     <ERASE-1
                 !by     >ERASE-1
-!ifdef RAM {
-                !by     <SWRAM-1
-                !by     >SWRAM-1
+!ifdef RAM1 {
+                !by     <REGISTER-1                     ; R 17
+                !by     >REGISTER-1
+;                !by     <DCOM-1
+;                !by     >DCOM-1
 } else {
                 !by     <CPSMON-1
-                !by     >CPSMON-1
+                !by     >CPSMON-1    
 }
                 !by     <CPCHR-1
                 !by     >CPCHR-1
@@ -2825,11 +2935,18 @@ NEWADR:         !by     <HCMDH-1
                 !by     <UCMD-1
                 !by     >UCMD-1
 
-!ifndef RAM {
+;!ifndef RAM {
+; this belongs to the CPSMON (Y) Function
+!ifndef RAM1 {
 OFSTAB:         !by     <_brk_hb+1
                 !by     >_brk_hb+1
                 !by     <REGISTER+1
                 !by     >REGISTER+1
+!ifdef RAM {
+                !by     <RCC4F+1
+                !by     >RCC4F+1
+} else {
+; this belongs to the "TRACE" command
                 !by     <LCC2C+1
                 !by     >LCC2C+1
                 !by     <LCC5B+1
@@ -2840,9 +2957,11 @@ OFSTAB:         !by     <_brk_hb+1
                 !by     >LCDA1+1
                 !by     <LCE03+1
                 !by     >LCE03+1
+}
+; this belongs to the "B" command
                 !by     <BASJMP
                 !by     >BASJMP
-} 
+}
 }
 ; -----------------------------------------------------------
 ; --------- END IFDEF PLUS ----------------------------------
