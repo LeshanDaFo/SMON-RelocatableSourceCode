@@ -1,5 +1,18 @@
 More update information and changlogs are in History.text
 
+### Update 2023.01.014 (V1.1.4.007)
+In the RAM under ROM function was a problem, it was not possible any more, to save the ROM content from $A000 to $FFFF.
+With the new version, this is corrected.
+
+The SMON-RAM-PLUS-version now get back the "Y" command to move the SMON to different memory location. 
+
+The command to change the memory location $01 is now available with the P-command. Examble: P 33 will write the value $33 into the memory location $01. The original P-command to change the printer address is removed.
+
+Additional disc-cammands are added to both RAM version:
+- P@ shows the error channel from the floppy
+- P$ shows the directory
+- P"cmd" sends a floppy command
+
 ### Update 2022.09.03 (V1.1.1.004)
 I have added a new function to the source code,  
 with this function it is possible to show the RAM under the ROM
