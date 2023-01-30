@@ -1,7 +1,7 @@
 ; ###############################################################
 ; #                                                             #
 ; #  SMON RELOCATABLE SOURCE CODE                               #       
-; #  Version 1.1.4.007 (2023.01.14)                             #
+; #  Version 1.1.4.008 (2023.01.30)                             #
 ; #  Copyright (c) 2022, 2023 Claus Schlereth                   #
 ; #                                                             #  
 ; #  Based on the source code from: cbmuser                     #
@@ -41,6 +41,7 @@
 ; V1.1.3.005    =   add a switch to hide the bounding line after 'brk','rts' and 'jmp', add some comments, re arrange the code
 ; V1.1.3.006    =   change a missspelled label from brdline to bndline 
 ; V1.1.4.007    =   work on ram under rom function ;error correction, rearange code and commands, add floppy commands, add more comments
+; V1.1.4.008    =   add comments to the B-command
 
 TASTBUF         = $0277
 COLOR           = $0286                         ; charcolor
@@ -1562,44 +1563,44 @@ LC948:          sta     $FD
                 jmp     LC934
 
 ; --------- BASICDATA (B) -----------------------------------
-BASICDATA:      jsr     GET2ADR
-                lda     #$37
+BASICDATA:      jsr     GET2ADR                         ; get 2 Addresses
+                lda     #$37                            ; restore rom
                 sta     $01
-                ldx     #$04
-LC975:          lda     DATATAB,x
-                sta     FLAG,x
+                ldx     #$04                            ; conter
+LC975:          lda     DATATAB,x                       ; pointer to Basic line number and DATALOOP address
+                sta     FLAG,x                          ; store it in $AA,x 
                 dex
-                bpl     LC975
-DATALOOP:       jsr     RETURN                          ; next line
-                ldx     FLAG
-                lda     ADRCODE
-                jsr     INTOUT
-                inc     FLAG
-                bne     LC98D
-                inc     ADRCODE
-LC98D:          lda     #$44
-                jsr     CHROUT
-                lda     #$C1
-LC994:          jsr     CHROUT
-                ldy     #$00
-                lda     (PCL),y
-                sty     $62
+                bpl     LC975                           ; next
+DATALOOP:       jsr     RETURN                          ; output return
+                ldx     FLAG                            ; low byte basic address
+                lda     ADRCODE                         ; high byte basic address
+                jsr     INTOUT                          ; Output Positive Integer in A/X
+                inc     FLAG                            ; increase low byte ; prepare next basic line address
+                bne     LC98D                           ; check if need to increase high byte                               
+                inc     ADRCODE                         ; increase high byte
+LC98D:          lda     #$44                            ; "D"
+                jsr     CHROUT                          ; output
+                lda     #$C1                            ; "shifted A"
+LC994:          jsr     CHROUT                          ; output
+                ldy     #$00                            ; high byte = "00"
+                lda     (PCL),y                         ; low byte load from memory
+                sty     $62                             ; prepare for Output Positive Integer
                 sta     $63
-                jsr     INTOUT1
-                jsr     CMPEND
-                ldx     #$03
-                bcs     LC9B3
-                lda     #$2C
-                ldx     $D3
-                cpx     #$49
-                bcc     LC994
-                ldx     #$09
-LC9B3:          stx     $C6
-LC9B5:          lda     SYS172-1,x
-                sta     $0276,x
-                dex
-                bne     LC9B5
-                jmp     EXIT
+                jsr     INTOUT1                         ; Output Positive Integer with allready stored values
+                jsr     CMPEND                          ; check for end
+                ldx     #$03                            ; last basic line confirm with 2 tims CRSR UP and RETURN
+                bcs     LC9B3                           ; branch if it was not last basic line
+                lda     #$2C                            ; load ','
+                ldx     $D3                             ; line length
+                cpx     #$49                            ; compare with decimal '73' to avoid oversized basic lines
+                bcc     LC994                           ; branch if space for more data in the line
+                ldx     #$09                            ; amount for complete message to print on screen "CRSR UP, CRSR UP, RETURN, 'Sy172', Return"
+LC9B3:          stx     $C6                             ; save x
+LC9B5:          lda     SYS172-1,x                      ; coppy message
+                sta     $0276,x                         ; into keybuffer
+                dex                                     ; dec counter
+                bne     LC9B5                           ; branch if not last
+                jmp     EXIT                            ; execute in basic, either end and stay in basic, or execute SYS172
 
 ; --------- OCCUPY (O) --------------------------------------
 OCCUPY:         jsr     GET2ADR
