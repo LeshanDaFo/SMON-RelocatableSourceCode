@@ -1,7 +1,7 @@
 ; ###############################################################
 ; #                                                             #
 ; #  SMON RELOCATABLE SOURCE CODE                               #       
-; #  Version 1.1.4.008 (2023.01.30)                             #
+; #  Version 1.1.5.008 (2023.01.31)                             #
 ; #  Copyright (c) 2022, 2023 Claus Schlereth                   #
 ; #                                                             #  
 ; #  Based on the source code from: cbmuser                     #
@@ -42,6 +42,7 @@
 ; V1.1.3.006    =   change a missspelled label from brdline to bndline 
 ; V1.1.4.007    =   work on ram under rom function ;error correction, rearange code and commands, add floppy commands, add more comments
 ; V1.1.4.008    =   add comments to the B-command
+; V1.1.5.008    =   error correction in the ILOC Version, the W-command was not working
 
 TASTBUF         = $0277
 COLOR           = $0286                         ; charcolor
@@ -337,11 +338,9 @@ HCMDTAB:        !by     HCK,HCM,HCR,HCD,HCH,HCZ,HCN     ; "':;,()!"
                 !by     $00,$00,$00
 }        
                 !by     $00,$00,$00
-!ifdef ILOC {
-OFFSET:         !by     $00,$00,$01,$00            
-} else {
+
 OFFSET:         !by     $FF,$FF,$01,$00            
-}
+
 ; find commands
 FINDTAB:        !by     $41,$5A,$49,$52,$54             ; "AZIRT"
 FINDFLG:        !by     $80,$20,$40,$10,$00
