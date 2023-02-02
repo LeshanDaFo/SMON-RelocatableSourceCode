@@ -1,35 +1,5 @@
+### Latest Version : 2023.02.02 V1.1.6.009
 More update information and changlogs are in History.text
-
-### Update 2023.01.14 (V1.1.4.007)
-In the RAM under ROM function was a problem, it was not possible any more, to save the ROM content from $A000 to $FFFF.
-With the new updated, this is corrected.
-
-The SMON-RAM-PLUS-version now get back the "Y" command to move the SMON to different memory location. 
-
-The command to change the memory location $01 is now available with the P-command. Examble: P 33 will write the value $33 into the memory location $01. The original P-command to change the printer address is removed.
-
-Additional disc-cammands are added to both RAM version:
-- P@ shows the error channel from the floppy
-- P$ shows the directory
-- P"cmd" sends a floppy command
-
-The idea for this additional commands are based on a SMON-version provided to me by rh70,
-which is also a member from FORUM64.
-https://www.forum64.de/wcf/index.php?user/20464-rh70/  
-
-### Update 2022.09.03 (V1.1.1.004)
-I have added a new function to the source code,  
-with this function it is possible to show the RAM under the ROM
-in the area from $A000 to $FFFF
-
-To compile it you should uncomment the RAM or RAM1 in the source code. 
-- RAM is the PLUS version with the extended function.  
-- RAM1 is the ILOC version with the extended function.
-  
-The Trace commands are not implemented now, and therefore removed.  
-The Y-command to move SMON is removed.  
-To change the address $01 you can use the Y-command  
-For example:  Y37 switch to normal status, Y34 switch to RAM
  
 ## SMON relocatable source code
 #### With the help of this source code you can build your own personal SMON-version  
