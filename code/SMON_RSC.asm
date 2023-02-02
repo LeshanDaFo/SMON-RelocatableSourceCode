@@ -1,7 +1,7 @@
 ; ###############################################################
 ; #                                                             #
 ; #  SMON RELOCATABLE SOURCE CODE                               #       
-; #  Version 1.1.5.008 (2023.01.31)                             #
+; #  Version 1.1.6.009 (2023.02.02)                             #
 ; #  Copyright (c) 2022, 2023 Claus Schlereth                   #
 ; #                                                             #  
 ; #  Based on the source code from: cbmuser                     #
@@ -33,16 +33,17 @@
 ; V1    =   Initial release
 ; V1.0.0.001    =   add more comments, not released
 ; V1.0.0.002    =   add more comments, not released
-; V1.0.0.003    =   re arrange some lables , add more comments
-; V1.1.0.003    =   start to add show ram under rom function, not released
-; V1.1.1.004    =   add the show ram under rom function, add more comments, re arrange code
+; V1.0.0.003    =   re arranged some lables , added more comments
+; V1.1.0.003    =   start to add the show ram under rom function, not released
+; V1.1.1.004    =   added the show ram under rom function, added more comments, re arranged code
 ; V1.1.2.004    =   error correction in "comma" function in RAM version
 ; V1.1.3.004    =   error correction in the SAVE command in the RAM version
-; V1.1.3.005    =   add a switch to hide the bounding line after 'brk','rts' and 'jmp', add some comments, re arrange the code
-; V1.1.3.006    =   change a missspelled label from brdline to bndline 
-; V1.1.4.007    =   work on ram under rom function ;error correction, rearange code and commands, add floppy commands, add more comments
-; V1.1.4.008    =   add comments to the B-command
-; V1.1.5.008    =   error correction in the ILOC Version, the W-command was not working
+; V1.1.3.005    =   added a switch to hide the bounding line after 'brk','rts' and 'jmp', added some comments, re arrangeed the code
+; V1.1.3.006    =   changeed a missspelled label from "brdline" to "bndline" 
+; V1.1.4.007    =   worked on ram under rom function ; error correction, rearanged code and commands, add floppy commands, added more comments
+; V1.1.4.008    =   added comments to the B-command
+; V1.1.5.008    =   error correction in the RAM version, the W-command was not working
+; V1.1.6.009    =   rearanged code in exclude bounding lines function, correct a problem in RAM disassembling, the opcodes were not displayed, added comments
 
 TASTBUF         = $0277
 COLOR           = $0286                         ; charcolor
@@ -139,7 +140,7 @@ HCN             = $21                           ; "!"
 ; - SELECT ONLY ONE VERSION BY UNCOMMENTING IT -
 ; if nothing is selected here, SMON will be compiled without any extension
 
-;FMON = 1       ; this is the FMON version, also named SMONFx000, this seems to be the 'normal' or initial one, including the base disc commands
+FMON = 1       ; this is the FMON version, also named SMONFx000, this seems to be the 'normal' or initial one, including the base disc commands
 ;PLUS = 1       ; this is the PLUS version, also named SMONPx000, for the new function the FMON monitor is removed
 ;ILOC = 1       ; this is the ILOC version, also named SMONIx000, this provides the function to show the illegal opcodes, the FMON is removed 
 
@@ -147,14 +148,14 @@ HCN             = $21                           ; "!"
 
 ; new extensions, the "Trace" functions and "Y" command are replaced by additional disc commands
 ;RAM = 1        ; this is the PLUS version with activated ram under rom function
-RAM1 = 1       ; this is the ILOC version with activated ram under rom function
+;RAM1 = 1       ; this is the ILOC version with activated ram under rom function
 ; -----------------------------------------------------------
 ; -------------------END SMON VERSION -----------------------
 ; -----------------------------------------------------------
 
 ; -----------------------------------------------------------
 ; --------- define here the start address in memory ---------
-        *= $C000
+        *= $8000
 ; -----------------------------------------------------------
 
 ; -----------------------------------------------------------
@@ -560,8 +561,8 @@ CHKHCMD:        cmp     HCMDTAB,x                       ; check for hidden comma
 }
 EXEC1:          jsr     GETCHRERR                       ; await next input
                 cmp     #$2E                            ; "." 
-                beq     EXEC1
-                jmp     LINSTORE
+                beq     EXEC1                           ; ignore dot
+                jmp     LINSTORE                        ; prepare buffer for J-command, and then jmp to CMDSTORE
 NEXT:           jmp     MORECMD
 
 } else {
@@ -975,6 +976,8 @@ DISASS:         ldx     #$00
                 jsr     GET12ADR
 LC564:          jsr     LC58C                           ; output one line
                 lda     BEFCODE                         ; load command code
+; here the bounding line after 'JMP','RTS' and 'BRK' will be printed
+!ifdef bndline {
                 cmp     #$16                            ; compare with "JMP"
                 beq     LC576                           ; print one line with "-"
                 cmp     #$30                            ; compare with "RTS"
@@ -983,8 +986,6 @@ LC564:          jsr     LC58C                           ; output one line
                 bne     LC586
                 nop
 LC576:          jsr     PRINTER1
-; here the bounding line after 'JMP','RTS' and 'BRK' will be printed
-!ifdef bndline {
                 jsr     RETURN                          ; next line
                 ldx     #$21                            ; amount of bounding line chars
                 lda     #$2D                            ; load with '-'
@@ -997,7 +998,7 @@ LC580:
                 dex                                     ; dec amount
                 bne     LC580                           ; not last
 } 
-; emd printing bounding line              
+; emd print bounding line                       
 LC586:
                 jsr     CONTIN
                 bcc     LC564
@@ -1008,18 +1009,10 @@ LC58C:          ldx     #$2C
                 jsr     SPACE                           ; output space
 LC597:          jsr     LC675
                 jsr     LC4CB
-!ifdef RAM {
-                jmp     SPCOC                           ; output opcode with leading space
-} else {
                 jsr     SPACE                           ; output space
-}
 LC5A0:          lda     (PCL),y
                 jsr     HEXOUT1                         ; output 2 digit hex address
-!ifdef RAM {
-                jmp     SPCOC                           ; output opcode with leading space
-} else {
                 jsr     SPACE                           ; output space
-}
                 iny
                 cpy     BEFLEN
                 bne     LC5A0

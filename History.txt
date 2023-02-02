@@ -8,4 +8,5 @@
 : 2022.09.10    V1.1.3.006  =   change a missspelled label from brdline to bndline
 ; 2023.01.14    V1.1.4.007  =   work on ram under rom function ;error correction, rearange code and commands, add floppy commands, add more comments
 ; 2023.01.30    V1.1.4.008  =   add comments to the B-command
-; 2023.01.31    V1.1.5.008  =   error correction in the ILOC Version, the W-command was not working
+; 2023.01.31    V1.1.5.008  =   error correction in the RAM version, the W-command was not working
+; 2023.02.02    V1.1.6.009  =   rearanged code in exclude bounding lines function, correct a problem in RAM disassembling, the opcodes were not displayed, added comments
