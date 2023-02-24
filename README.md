@@ -1,6 +1,6 @@
 ### Latest Version : 2023.02.24 V1.2.6.10
 
-Update information and changlogs are in History.text
+Update information and changlogs are in History.txt
  
 ## SMON relocatable source code
 #### With the help of this source code you can build your own personal SMON-version  
