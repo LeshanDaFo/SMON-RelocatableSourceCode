@@ -1,5 +1,6 @@
 ; History:
 
+; 2023.04.21    V1.2.7.10   =   error correction, after removing the RAM-version, the Z-command was not working any more
 ; 2023-02.24    V1.2.6.10   =   with this version, the RAM under ROM functions are removed, the RAM under ROM version get an own repository now.
 ;                               the repository can be found at: https://github.com/LeshanDaFo/SMON-RAM-VERSION
 ; 2023.02.02    V1.1.6.009  =   rearanged code in exclude bounding lines function, correct a problem in RAM disassembling, the opcodes were not displayed, added comments

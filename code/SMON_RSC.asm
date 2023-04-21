@@ -1,7 +1,7 @@
 ; ###############################################################
 ; #                                                             #
 ; #  SMON RELOCATABLE SOURCE CODE                               #       
-; #  Version 1.2.6.10 (2023.02.24)                              #
+; #  Version 1.2.7.10 (2023.04.21)                              #
 ; #  Copyright (c) 2022, 2023 Claus Schlereth                   #
 ; #                                                             #  
 ; #  Based on the source code from: cbmuser                     #
@@ -37,6 +37,7 @@
 ; ---------------------------------------------------------------
 ; V1.2.6.10     =   with this version, the RAM under ROM functions are removed, the RAM under ROM version get an own repository now.
 ;                   the RAM under ROM function can be found at: https://github.com/LeshanDaFo/SMON-RAM-VERSION
+; V1.2.7.10     =   error correction, after removing the RAM-version, the Z-command was not working any more
 
 TASTBUF         = $0277
 COLOR           = $0286                         ; charcolor
@@ -209,6 +210,8 @@ CMDTBL:         !by     $27,$23,$24,$25,$2C,$3A,$3B,$3D ;"'#$%,:;="
 ; depending of the selection, different commands are defined
 !ifdef FCOM {
                 !by     $00                             ; deactivate the trace command if FCOM is selected              
+} else {
+                !by     $54                             ; "T"
 }
                 !by     $56,$57,$58                     ; "VWX"
 !ifdef FMON {
