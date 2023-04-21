@@ -1,4 +1,4 @@
-### Latest Version : 2023.02.24 V1.2.6.10
+### Latest Version : 2023.04.21 V1.2.7.10
 
 Update information and changlogs are in History.txt
  
