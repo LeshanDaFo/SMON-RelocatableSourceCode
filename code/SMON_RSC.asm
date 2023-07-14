@@ -62,7 +62,7 @@ SAVEVECT        = $0332                         ; Vector: Kernal SAVE
 
 ;READY
 WARMSTART       = $A474                         ; Restart BASIC
-ADD             = $BC49                         ; Addition
+FLOATC          = $BC49                         ; FLOAT UNSIGNED VALUE IN FAC+1,2
 INTOUT          = $BDCD                         ; Output Positive Integer in A/X
 INTOUT1         = $BDD1                         ; Output Positive Integer in A/X
 FLPSTR          = $BDDD                         ; Convert FAC#1 to ASCII String
@@ -1313,7 +1313,7 @@ LC8EB:          jsr     SPACE                           ; output space
                 lda     #$37
                 sta     $01
                 plp
-                jsr     ADD
+                jsr     FLOATC
                 jsr     FLPSTR
                 ldx     MEM
                 stx     $01
